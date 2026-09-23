@@ -379,6 +379,12 @@ img {
     white-space: nowrap;
 }
 
+.translate-control .goog-logo-link,
+.translate-control .goog-te-gadget img,
+.translate-control .goog-te-gadget > span {
+    display: none !important;
+}
+
 .translate-control .goog-te-gadget select {
     width: 130px;
     max-width: 100%;
