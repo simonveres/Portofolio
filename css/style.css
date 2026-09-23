@@ -894,14 +894,14 @@ body {
 }
 
 .ai-profile-panel {
-    width: min(330px, 100%);
+    width: min(390px, 100%);
     margin-top: 12px;
-    padding: 18px;
+    overflow: hidden;
     border: 1px solid rgba(126, 214, 245, 0.55);
-    border-radius: 10px;
-    background: rgba(7, 35, 57, 0.94);
+    border-radius: 16px;
+    background: #F5FBFD;
     box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
-    color: #FFFFFF;
+    color: #172033;
 }
 
 .ai-profile-panel-heading {
@@ -909,11 +909,34 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 8px;
+    padding: 15px 17px;
+    background: linear-gradient(135deg, #0B1F3A, #0B5E8E);
+    color: #FFFFFF;
 }
 
 .ai-profile-panel-heading strong {
-    font-size: 15px;
+    display: block;
+    font-size: 14px;
+}
+
+.ai-profile-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ai-profile-title small {
+    display: block;
+    margin-top: 2px;
+    color: #B9E3F5;
+    font-size: 10px;
+}
+
+.ai-chat-body {
+    display: grid;
+    gap: 12px;
+    padding: 16px 17px 12px;
+    background: #F5FBFD;
 }
 
 .ai-profile-close {
@@ -925,25 +948,62 @@ body {
     line-height: 1;
 }
 
-.ai-profile-panel > p {
-    margin-bottom: 14px;
-    color: #D2EEF7;
+.ai-message {
+    max-width: 92%;
+    padding: 11px 13px;
+    border-radius: 13px;
     font-size: 12px;
     line-height: 1.55;
+}
+
+.ai-message-bot {
+    border: 1px solid #D5EAF1;
+    border-top-left-radius: 4px;
+    background: #FFFFFF;
+    color: #344054;
+}
+
+.ai-profile-answer {
+    margin: 0 17px 12px;
+}
+
+.ai-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ai-suggestions button {
+    padding: 7px 10px;
+    border: 1px solid #A8D9E9;
+    border-radius: 999px;
+    background: #E8F7FC;
+    color: #0B5E8E;
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.ai-suggestions button:hover {
+    background: #D2F1FC;
 }
 
 .ai-profile-form {
     display: flex;
     gap: 8px;
+    padding: 12px 17px 17px;
+    border-top: 1px solid #D5EAF1;
+    background: #FFFFFF;
 }
 
 .ai-profile-form input {
     min-width: 0;
     flex: 1;
     padding: 10px 11px;
-    border: 1px solid rgba(210, 238, 247, 0.35);
-    border-radius: 5px;
-    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #B7DCE8;
+    border-radius: 8px;
+    background: #F8FCFD;
     color: #172033;
     font: inherit;
     font-size: 12px;
@@ -952,22 +1012,14 @@ body {
 .ai-profile-form button {
     padding: 10px 13px;
     border: 0;
-    border-radius: 5px;
-    background: #3B9AC7;
+    border-radius: 8px;
+    background: #0B5E8E;
     color: #FFFFFF;
     cursor: pointer;
     font: inherit;
     font-size: 12px;
     font-weight: 800;
 }
-
-.ai-profile-answer {
-    margin-top: 14px;
-    color: #FFFFFF;
-    font-size: 12px;
-    line-height: 1.6;
-}
-
 
 /* =========================================================
    7. QUICK PORTFOLIO SECTION

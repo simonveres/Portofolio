@@ -69,6 +69,7 @@ const aiProfileClose = document.querySelector(".ai-profile-close");
 const aiProfileForm = document.querySelector(".ai-profile-form");
 const aiProfileInput = document.querySelector("#ai-profile-input");
 const aiProfileAnswer = document.querySelector(".ai-profile-answer");
+const aiQuestionButtons = document.querySelectorAll("[data-ai-question]");
 
 if (aiProfileButton && aiProfilePanel && aiProfileForm && aiProfileInput && aiProfileAnswer) {
 	const answers = [
@@ -125,15 +126,28 @@ if (aiProfileButton && aiProfilePanel && aiProfileForm && aiProfileInput && aiPr
 
 	aiProfileForm.addEventListener("submit", (event) => {
 		event.preventDefault();
-		const question = aiProfileInput.value.trim().toLowerCase();
+		const question = aiProfileInput.value.trim();
+		const answer = getAiAnswer(question);
+		aiProfileAnswer.textContent = answer;
+	});
+
+	const getAiAnswer = (questionText) => {
+		const question = questionText.toLowerCase();
 		if (!question) {
-			aiProfileAnswer.textContent = "Ask me a question about Simon and I will look through his portfolio.";
-			return;
+			return "Ask me a question about Simon and I will look through his portfolio.";
 		}
 		const result = answers.find((answer) => answer.keywords.some((keyword) => question.includes(keyword)));
-		aiProfileAnswer.textContent = result
+		return result
 			? result.text
 			: "I do not have that detail yet, but you can ask me about Simon's profile, education, experience, projects, skills, certificates, organization, gallery, or contact details.";
+	};
+
+	aiQuestionButtons.forEach((button) => {
+		button.addEventListener("click", () => {
+			aiProfileInput.value = button.dataset.aiQuestion;
+			aiProfileAnswer.textContent = getAiAnswer(button.dataset.aiQuestion);
+			aiProfileInput.focus();
+		});
 	});
 }
 

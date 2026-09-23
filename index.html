@@ -179,17 +179,27 @@
                                 <span class="ai-antenna"></span>
                                 <span class="ai-face"><i></i><i></i></span>
                             </span>
-                            <strong>Simon AI Assistant</strong>
+                            <span>
+                                <strong>Simon AI Assistant</strong>
+                                <small>Online portfolio guide</small>
+                            </span>
                         </span>
                         <button class="ai-profile-close" type="button" aria-label="Close AI profile panel">&times;</button>
                     </div>
-                    <p>Ask me anything about Simon, his background, work, projects, or interests.</p>
+                    <div class="ai-chat-body">
+                        <div class="ai-message ai-message-bot">Hi! Ask me anything about Simon, his background, work, projects, or interests.</div>
+                        <div class="ai-suggestions" aria-label="Suggested questions">
+                            <button type="button" data-ai-question="What is Simon's experience?">Experience</button>
+                            <button type="button" data-ai-question="What project has Simon worked on?">Projects</button>
+                            <button type="button" data-ai-question="What are Simon's skills?">Skills</button>
+                        </div>
+                    </div>
                     <form class="ai-profile-form">
                         <label class="sr-only" for="ai-profile-input">Ask about Simon</label>
                         <input id="ai-profile-input" type="search" placeholder="What would you like to know about Simon?" autocomplete="off">
                         <button type="submit">Send</button>
                     </form>
-                    <div class="ai-profile-answer" role="status" aria-live="polite">Hi! I can tell you about Simon's background, experience, projects, skills, and more.</div>
+                    <div class="ai-profile-answer ai-message ai-message-bot" role="status" aria-live="polite">I can help you explore Simon's portfolio.</div>
                 </div>
 
             </div>
