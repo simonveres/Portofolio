@@ -39,6 +39,30 @@ if (translateContainer && !document.querySelector("script[data-google-translate]
 	document.body.appendChild(translateScript);
 }
 
+const menuToggle = document.querySelector(".menu-toggle");
+const primaryNavigation = document.querySelector(".nav-menu");
+
+if (menuToggle && primaryNavigation) {
+	const closeMenu = () => {
+		menuToggle.classList.remove("is-open");
+		primaryNavigation.classList.remove("is-open");
+		menuToggle.setAttribute("aria-expanded", "false");
+		menuToggle.setAttribute("aria-label", "Open navigation menu");
+	};
+
+	menuToggle.addEventListener("click", () => {
+		const isOpen = primaryNavigation.classList.toggle("is-open");
+		menuToggle.classList.toggle("is-open", isOpen);
+		menuToggle.setAttribute("aria-expanded", String(isOpen));
+		menuToggle.setAttribute("aria-label", isOpen ? "Close navigation menu" : "Open navigation menu");
+	});
+
+	primaryNavigation.querySelectorAll("a").forEach((link) => link.addEventListener("click", closeMenu));
+	window.addEventListener("resize", () => {
+		if (window.innerWidth > 768) closeMenu();
+	});
+}
+
 const aiProfileButton = document.querySelector(".ai-profile-button");
 const aiProfilePanel = document.querySelector("#ai-profile-panel");
 const aiProfileClose = document.querySelector(".ai-profile-close");
