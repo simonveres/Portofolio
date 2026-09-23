@@ -25,6 +25,21 @@ function googleTranslateElementInit() {
 			buttonText: "Translate",
 			autoDisplay: false
 		}, "google_translate_element");
+
+		const translateContainer = document.querySelector("#google_translate_element");
+		const removeTranslateBranding = () => {
+			const gadget = translateContainer?.querySelector(".goog-te-gadget");
+			if (!gadget) return;
+
+			[...gadget.childNodes].forEach((node) => {
+				if (node.nodeType === Node.TEXT_NODE) node.remove();
+			});
+			gadget.querySelectorAll(".goog-logo-link, .goog-te-gadget > span").forEach((element) => element.remove());
+		};
+
+		removeTranslateBranding();
+		const translateObserver = new MutationObserver(removeTranslateBranding);
+		if (translateContainer) translateObserver.observe(translateContainer, { childList: true, subtree: true });
 	}
 }
 
