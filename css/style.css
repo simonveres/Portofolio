@@ -916,7 +916,13 @@ body {
     color: #172033;
 }
 
+.ai-profile-panel[hidden] {
+    display: none !important;
+}
+
 .ai-profile-panel-heading {
+    position: relative;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1439,12 +1445,29 @@ select {
 }
 
 .ai-profile-close {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    place-items: center;
     border: 0;
+    border-radius: 50%;
     background: transparent;
     color: #D2EEF7;
     cursor: pointer;
     font-size: 22px;
     line-height: 1;
+    pointer-events: auto;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ai-profile-close:hover,
+.ai-profile-close:focus-visible {
+    background: rgba(255, 255, 255, 0.18);
+    color: #FFFFFF;
+    outline: none;
 }
 
 .ai-message {

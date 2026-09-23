@@ -137,7 +137,14 @@ if (aiProfileButton && aiProfilePanel && aiProfileForm && aiProfileInput && aiCh
 	};
 
 	aiProfileButton.addEventListener("click", () => setPanelState(aiProfilePanel.hidden));
-	aiProfileClose?.addEventListener("click", () => setPanelState(false));
+	aiProfileClose?.addEventListener("click", (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+		setPanelState(false);
+	});
+	aiProfilePanel.addEventListener("click", (event) => {
+		if (event.target.closest(".ai-profile-close")) setPanelState(false);
+	});
 
 	const getAiAnswer = (questionText) => {
 		const question = questionText.toLowerCase();
