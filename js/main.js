@@ -68,10 +68,10 @@ const aiProfilePanel = document.querySelector("#ai-profile-panel");
 const aiProfileClose = document.querySelector(".ai-profile-close");
 const aiProfileForm = document.querySelector(".ai-profile-form");
 const aiProfileInput = document.querySelector("#ai-profile-input");
-const aiProfileAnswer = document.querySelector(".ai-profile-answer");
+const aiChatMessages = document.querySelector("#ai-chat-messages");
 const aiQuestionButtons = document.querySelectorAll("[data-ai-question]");
 
-if (aiProfileButton && aiProfilePanel && aiProfileForm && aiProfileInput && aiProfileAnswer) {
+if (aiProfileButton && aiProfilePanel && aiProfileForm && aiProfileInput && aiChatMessages) {
 	const answers = [
 		{
 			keywords: ["hello", "hi", "halo", "hey", "hai"],
@@ -124,13 +124,6 @@ if (aiProfileButton && aiProfilePanel && aiProfileForm && aiProfileInput && aiPr
 	aiProfileButton.addEventListener("click", () => setPanelState(aiProfilePanel.hidden));
 	aiProfileClose?.addEventListener("click", () => setPanelState(false));
 
-	aiProfileForm.addEventListener("submit", (event) => {
-		event.preventDefault();
-		const question = aiProfileInput.value.trim();
-		const answer = getAiAnswer(question);
-		aiProfileAnswer.textContent = answer;
-	});
-
 	const getAiAnswer = (questionText) => {
 		const question = questionText.toLowerCase();
 		if (!question) {
@@ -142,10 +135,60 @@ if (aiProfileButton && aiProfilePanel && aiProfileForm && aiProfileInput && aiPr
 			: "I do not have that detail yet, but you can ask me about Simon's profile, education, experience, projects, skills, certificates, organization, gallery, or contact details.";
 	};
 
+	const scrollChatToBottom = () => {
+		aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+	};
+
+	const appendMessage = (text, type) => {
+		const message = document.createElement("div");
+		message.className = `ai-message ai-message-${type}`;
+		message.textContent = text;
+		aiChatMessages.appendChild(message);
+		scrollChatToBottom();
+		return message;
+	};
+
+	const answerQuestion = (questionText) => {
+		const question = questionText.trim();
+		if (!question) return;
+
+		appendMessage(question, "user");
+		aiProfileInput.value = "";
+		aiProfileInput.style.height = "auto";
+
+		const typing = document.createElement("div");
+		typing.className = "ai-message ai-message-bot ai-typing";
+		typing.setAttribute("aria-label", "Simon AI is typing");
+		typing.innerHTML = "<span></span><span></span><span></span>";
+		aiChatMessages.appendChild(typing);
+		scrollChatToBottom();
+
+		window.setTimeout(() => {
+			typing.remove();
+			appendMessage(getAiAnswer(question), "bot");
+		}, 520);
+	};
+
+	aiProfileForm.addEventListener("submit", (event) => {
+		event.preventDefault();
+		answerQuestion(aiProfileInput.value);
+	});
+
+	aiProfileInput.addEventListener("keydown", (event) => {
+		if (event.key === "Enter" && !event.shiftKey) {
+			event.preventDefault();
+			answerQuestion(aiProfileInput.value);
+		}
+	});
+
+	aiProfileInput.addEventListener("input", () => {
+		aiProfileInput.style.height = "auto";
+		aiProfileInput.style.height = `${Math.min(aiProfileInput.scrollHeight, 96)}px`;
+	});
+
 	aiQuestionButtons.forEach((button) => {
 		button.addEventListener("click", () => {
-			aiProfileInput.value = button.dataset.aiQuestion;
-			aiProfileAnswer.textContent = getAiAnswer(button.dataset.aiQuestion);
+			answerQuestion(button.dataset.aiQuestion);
 			aiProfileInput.focus();
 		});
 	});

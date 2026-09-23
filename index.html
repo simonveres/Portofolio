@@ -186,20 +186,21 @@
                         </span>
                         <button class="ai-profile-close" type="button" aria-label="Close AI profile panel">&times;</button>
                     </div>
-                    <div class="ai-chat-body">
-                        <div class="ai-message ai-message-bot">Hi! Ask me anything about Simon, his background, work, projects, or interests.</div>
+                    <div class="ai-chat-body" id="ai-chat-messages" aria-live="polite">
+                        <div class="ai-message ai-message-bot">Hi! I'm Simon AI. Mau tahu lebih banyak tentang Simon? Kamu bisa tanya tentang experience, projects, skills, education, atau hal lainnya.</div>
                         <div class="ai-suggestions" aria-label="Suggested questions">
                             <button type="button" data-ai-question="What is Simon's experience?">Experience</button>
                             <button type="button" data-ai-question="What project has Simon worked on?">Projects</button>
                             <button type="button" data-ai-question="What are Simon's skills?">Skills</button>
+                            <button type="button" data-ai-question="Where did Simon study?">Education</button>
+                            <button type="button" data-ai-question="What are Simon's achievements?">Achievements</button>
                         </div>
                     </div>
                     <form class="ai-profile-form">
                         <label class="sr-only" for="ai-profile-input">Ask about Simon</label>
-                        <input id="ai-profile-input" type="search" placeholder="What would you like to know about Simon?" autocomplete="off">
-                        <button type="submit">Send</button>
+                        <textarea id="ai-profile-input" rows="1" placeholder="Ask me anything about Simon..." autocomplete="off"></textarea>
+                        <button type="submit" aria-label="Send message">&#8593;</button>
                     </form>
-                    <div class="ai-profile-answer ai-message ai-message-bot" role="status" aria-live="polite">I can help you explore Simon's portfolio.</div>
                 </div>
 
             </div>
