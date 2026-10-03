@@ -162,31 +162,6 @@ function setMetadata(profile) {
 	document.querySelector('meta[property="og:url"]').content = window.location.href;
 }
 
-function renderProfile(profile) {
-	if (!profile) return false;
-	document.querySelector("#portfolio-name").textContent = profile.name || "";
-	document.querySelector("#portfolio-title").textContent = profile.headline || profile.title || "";
-	document.querySelector("#portfolio-bio").textContent = profile.bio || profile.description || "";
-	document.querySelector("#portfolio-location").textContent = profile.location || "";
-	document.querySelector("#portfolio-brand").textContent = profile.name || "PORTFOLIO";
-	document.querySelector("#portfolio-headline").textContent = profile.headline || profile.title || "PROFESSIONAL PROFILE";
-	document.querySelector("#portfolio-footer-name").textContent = profile.name || "Portfolio Builder";
-	const image = safeLink(profile.profileImage || "");
-	const imageNode = document.querySelector("#portfolio-image");
-	if (image) {
-		imageNode.src = image;
-		imageNode.alt = profile.name ? `${profile.name} profile` : "Profile photo";
-		imageNode.hidden = false;
-	}
-	const heroCopy = document.querySelector(".builder-hero-copy");
-	for (const [key, label] of [["university", "University"], ["gpa", "GPA"], ["email", "Email"], ["phone", "Phone"]]) {
-		if (profile[key]) heroCopy.append(node("p", "builder-location", `${label}: ${profile[key]}`));
-	}
-	if (profile.cvUrl) appendLink(heroCopy, "Download CV", profile.cvUrl);
-	setMetadata(profile);
-	return true;
-}
-
 function hasRenderableData(record, collection = "") {
 	const ignored = ["id", "userId", "published", "order", "createdAt", "updatedAt"];
 	if (collection === "profiles") ignored.push("username");
@@ -195,80 +170,442 @@ function hasRenderableData(record, collection = "") {
 			|| (typeof value === "number" && Number.isFinite(value))));
 }
 
-function renderCard(collection, record) {
-	const card = node("article", `builder-card${collection === "gallery" ? " builder-gallery-card" : ""}`);
-	const title = record.title || record.position || record.organizationName || record.institution
-		|| record.name || record.platform || record.company || "";
-	const imageUrl = safeLink(record.imageUrl || record.image || "");
-	if (imageUrl && ["projects", "organizations", "certificates", "achievements", "gallery"].includes(collection)) {
-		const image = node("img", "builder-card-image");
+function appendAction(parent, label, value, className = "publication-link") {
+	const href = safeLink(value);
+	if (!href) return;
+	const link = node("a", className, label);
+	link.href = href;
+	link.target = "_blank";
+	link.rel = "noopener noreferrer";
+	parent.append(link);
+}
+
+function addHeroInfo(profile) {
+	const root = document.querySelector("#portfolio-info");
+	const items = [
+		["GPA", profile.gpa],
+		["UNIVERSITY", profile.university],
+		["LOCATION", profile.location],
+		["FOCUS", profile.focus || profile.interests]
+	].filter(([, value]) => String(value || "").trim());
+	root.replaceChildren(...items.map(([label, value]) => {
+		const item = document.createElement("div");
+		item.append(node("strong", "", label), node("span", "", value));
+		return item;
+	}));
+	root.hidden = items.length === 0;
+}
+
+function contactAction(contact) {
+	if (!contact) return "";
+	const whatsapp = String(contact.whatsapp || "").replace(/\D/g, "");
+	if (whatsapp) return `https://wa.me/${whatsapp}`;
+	if (contact.email) return `mailto:${contact.email}`;
+	if (contact.phone) return `tel:${contact.phone}`;
+	return "";
+}
+
+function renderProfile(profile = {}, contact = {}) {
+	const hero = document.querySelector("#profile-section");
+	const name = profile.name || "";
+	document.querySelector("#portfolio-name").textContent = name;
+	document.querySelector("#portfolio-title").textContent = profile.headline || profile.title || "";
+	document.querySelector("#portfolio-bio").textContent = profile.bio || profile.description || "";
+	document.querySelector("#portfolio-location").textContent = profile.location || "";
+	document.querySelector("#portfolio-brand").textContent = name || "PORTFOLIO";
+	document.querySelector("#portfolio-mark").textContent = name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "PB";
+	document.querySelector("#portfolio-headline").textContent = profile.headline || profile.title || "PROFESSIONAL PROFILE";
+	document.querySelector("#portfolio-footer-name").textContent = name || "Portfolio";
+	document.querySelector("#portfolio-focus").textContent = profile.focus || "PROFESSIONAL PROFILE";
+	addHeroInfo(profile);
+	const imageUrl = safeLink(profile.profileImage || "");
+	const image = document.querySelector("#portfolio-image");
+	if (imageUrl) {
 		image.src = imageUrl;
-		image.alt = title || "Portfolio image";
-		image.loading = "lazy";
-		card.append(image);
+		image.alt = name ? `${name} profile photo` : "Profile photo";
+		image.hidden = false;
+		document.querySelector("#profile-visual").hidden = false;
+	} else {
+		hero.classList.add("hero-no-image");
 	}
-	const content = node("div", "builder-card-copy");
-	if (title) content.append(node("h3", "", title));
-	const subtitle = record.company || record.degree || record.field || record.issuer || record.publisher
-		|| record.category || record.level || record.username || "";
-	if (subtitle) content.append(node("p", "builder-card-subtitle", subtitle));
-	if (record.position && title !== record.position) content.append(node("p", "builder-card-subtitle", record.position));
-	if (record.location) content.append(node("p", "builder-card-subtitle", record.location));
-	if (record.address) content.append(node("p", "builder-card-description", record.address));
-	const period = [record.startDate, record.endDate].filter(Boolean).join(" - ") || record.date || "";
-	if (period) content.append(node("small", "builder-card-period", period));
-	if (record.description) content.append(node("p", "builder-card-description", record.description));
-	if (record.technologies) content.append(node("p", "builder-card-subtitle", record.technologies));
-	if (record.contribution) content.append(node("p", "builder-card-description", record.contribution));
-	if (collection === "socials" || collection === "contacts") {
-		for (const key of ["url", "linkedin", "instagram", "github", "website"]) appendLink(content, record.platform || key, record[key]);
-	}
-	if (collection === "projects") {
-		appendLink(content, "View project", record.projectUrl);
-		appendLink(content, "GitHub", record.githubUrl);
-	}
-	if (record.icon) appendLink(content, "Icon", record.icon);
-	if (collection === "publications" || collection === "achievements") appendLink(content, "View details", record.url);
-	if (collection === "certificates") appendLink(content, "View certificate", record.certificateUrl);
-	if (collection === "contacts") {
-		if (record.email) {
-			const email = node("a", "builder-link", record.email);
-			email.href = `mailto:${record.email}`;
-			content.append(email);
+	const contactLink = document.querySelector("#portfolio-contact-action");
+	const actionUrl = contactAction(contact);
+	if (actionUrl) {
+		contactLink.href = actionUrl;
+		contactLink.textContent = "Hubungi Saya";
+		contactLink.hidden = false;
+		if (actionUrl.startsWith("https:")) {
+			contactLink.target = "_blank";
+			contactLink.rel = "noopener noreferrer";
 		}
-		if (record.phone) {
-			const phone = node("a", "builder-link", record.phone);
-			phone.href = `tel:${record.phone}`;
-			content.append(phone);
-		}
-		const whatsapp = String(record.whatsapp || "").replace(/\D/g, "");
-		if (whatsapp) appendLink(content, "WhatsApp", `https://wa.me/${whatsapp}`);
 	}
-	card.append(content);
-	return card;
+	const cvLink = document.querySelector("#portfolio-cv-action");
+	if (profile.cvUrl && safeLink(profile.cvUrl)) {
+		cvLink.href = safeLink(profile.cvUrl);
+		cvLink.hidden = false;
+	}
+	setMetadata(profile);
+	return true;
 }
 
-function renderCollection(collection, records) {
-	const section = document.querySelector(`[data-section="${collection}"]`);
-	const root = document.querySelector(`[data-records="${collection}"]`);
-	if (!records.length) {
-		section.hidden = true;
-		return;
-	}
-	records.sort((left, right) => (left.order ?? 0) - (right.order ?? 0));
-	root.replaceChildren(...records.map((record) => renderCard(collection, record)));
-	section.hidden = false;
-	const nav = document.createElement("a");
-	nav.href = `#${section.id}`;
-	nav.textContent = section.querySelector("h2").textContent;
-	document.querySelector("#portfolio-navigation").append(nav);
+function periodLabel(record) {
+	return [record.startDate, record.endDate].filter(Boolean).join(" - ") || record.date || "";
 }
 
-function addProfileNavigation() {
-	const link = document.createElement("a");
-	link.href = "#profile-section";
-	link.textContent = "Profile";
-	document.querySelector("#portfolio-navigation").prepend(link);
+function sectionHeading(section, label, title, detail = "") {
+	const heading = node("div", "organization-heading");
+	heading.append(node("p", "page-label", label.toUpperCase()), node("h2", "", title));
+	if (detail) heading.append(node("p", "", detail));
+	section.append(heading);
+}
+
+function createSection(id, className, label, title, detail) {
+	const section = node("section", className);
+	section.id = id;
+	sectionHeading(section, label, title, detail);
+	return section;
+}
+
+function renderTimeline(collection, records, label, title) {
+	if (!records.length) return null;
+	const section = node("section", "timeline-section");
+	section.id = `${collection}-section`;
+	const heading = node("div", "section-heading");
+	heading.append(node("span", "", label.toUpperCase()), node("h2", "", title));
+	section.append(heading);
+	const timeline = node("div", "timeline");
+	records.forEach((record, index) => {
+		const item = node("article", "timeline-item");
+		item.append(node("span", "timeline-dot"));
+		const card = node("div", "timeline-card");
+		const date = periodLabel(record);
+		if (date) card.append(node("span", "timeline-year", date));
+		card.append(node("h3", "", record.institution || record.position || record.title || ""));
+		const subtitle = [record.degree || record.company, record.field || record.location].filter(Boolean).join(" · ");
+		if (subtitle) card.append(node("h4", "", subtitle));
+		if (record.description) card.append(node("p", "", record.description));
+		if (record.gpa) card.append(node("p", "", `GPA: ${record.gpa}`));
+		item.append(card);
+		timeline.append(item);
+	});
+	section.append(timeline);
+	return section;
+}
+
+function renderAboutCards(records, { id, label, title, detail, className = "about-menu" }) {
+	if (!records.length) return null;
+	const section = createSection(id, className, label, title, detail);
+	const grid = node("div", "about-grid");
+	records.forEach((record, index) => {
+		const card = node("article", "about-card organization-card");
+		card.append(node("span", "card-number", String(index + 1).padStart(2, "0")));
+		const date = periodLabel(record);
+		if (date) card.append(node("span", "timeline-year", date));
+		const heading = record.organizationName || record.title || record.name || record.position || "";
+		if (heading) card.append(node("h3", "", heading));
+		const subtitle = [record.position, record.issuer || record.company || record.institution].filter(Boolean).join(" · ");
+		if (subtitle) card.append(node("h4", "", subtitle));
+		if (record.description) card.append(node("p", "", record.description));
+		if (record.image || record.imageUrl) {
+			const imageUrl = safeLink(record.imageUrl || record.image);
+			if (imageUrl) {
+				const image = node("img", "portfolio-record-image");
+				image.src = imageUrl;
+				image.alt = heading || label;
+				image.loading = "lazy";
+				card.append(image);
+			}
+		}
+		if (record.url) appendAction(card, "View details", record.url, "certificate-link");
+		if (record.certificateUrl) appendAction(card, "View certificate", record.certificateUrl, "certificate-link");
+		grid.append(card);
+	});
+	section.append(grid);
+	return section;
+}
+
+function renderProjects(records) {
+	if (!records.length) return null;
+	const section = createSection("projects-section", "about-menu project-section", "Projects", "Selected Projects");
+	records.forEach((record) => {
+		const feature = node("article", "project-feature");
+		const title = record.title || record.name || "Project";
+		const imageUrl = safeLink(record.imageUrl || record.image || "");
+		if (imageUrl) {
+			const imageLink = node("a", "project-image");
+			imageLink.href = imageUrl;
+			imageLink.target = "_blank";
+			imageLink.rel = "noopener noreferrer";
+			const image = node("img");
+			image.src = imageUrl;
+			image.alt = title;
+			image.loading = "lazy";
+			imageLink.append(image);
+			feature.append(imageLink);
+		} else {
+			feature.classList.add("project-feature-text");
+		}
+		const content = node("div", "project-content");
+		content.append(node("span", "project-kicker", record.category || "FEATURED PROJECT"));
+		content.append(node("h3", "", title));
+		const subtitle = record.company || record.organizationName || record.role || "";
+		if (subtitle) content.append(node("h4", "", subtitle));
+		if (record.description) content.append(node("p", "", record.description));
+		if (record.technologies) {
+			content.append(node("strong", "project-label", "Tools & Focus"));
+			content.append(node("p", "project-skills", record.technologies));
+		}
+		if (record.contribution) {
+			content.append(node("strong", "project-label", "Key Contributions"));
+			content.append(node("p", "", record.contribution));
+		}
+		if (record.projectUrl) appendAction(content, "View project", record.projectUrl);
+		if (record.githubUrl) appendAction(content, "GitHub", record.githubUrl, "publication-link");
+		feature.append(content);
+		section.append(feature);
+	});
+	return section;
+}
+
+function renderGallery(records) {
+	if (!records.length) return null;
+	const section = createSection("gallery-section", "about-menu gallery-section", "Gallery", "Selected Moments");
+	const grid = node("div", "gallery-grid");
+	records.forEach((record) => {
+		const card = node("article", "gallery-card");
+		const imageUrl = safeLink(record.imageUrl || record.image || "");
+		if (imageUrl) {
+			const link = node("a");
+			link.href = imageUrl;
+			link.target = "_blank";
+			link.rel = "noopener noreferrer";
+			const image = node("img");
+			image.src = imageUrl;
+			image.alt = record.title || "Portfolio gallery image";
+			image.loading = "lazy";
+			link.append(image);
+			card.append(link);
+		}
+		const copy = node("div", "gallery-copy");
+		if (record.title) copy.append(node("h3", "", record.title));
+		if (record.description) copy.append(node("p", "", record.description));
+		card.append(copy);
+		grid.append(card);
+	});
+	section.append(grid);
+	return section;
+}
+
+function renderSkills(records) {
+	if (!records.length) return null;
+	const section = node("section", "skills-section");
+	section.id = "skills-section";
+	const groups = new Map();
+	for (const record of records) {
+		const category = record.category || "Professional Skills";
+		if (!groups.has(category)) groups.set(category, []);
+		groups.get(category).push(record);
+	}
+	[...groups.entries()].forEach(([category, skills], index) => {
+		const panel = node("article", "skills-panel");
+		const heading = node("div", "skills-panel-heading");
+		const copy = document.createElement("div");
+		copy.append(node("span", "small-title", category.toUpperCase()), node("h2", "", category));
+		heading.append(node("span", "skills-number", String(index + 1).padStart(2, "0")), copy);
+		const list = node("ul", "skills-list");
+		for (const skill of skills) {
+			const item = document.createElement("li");
+			const detail = [skill.level, skill.description].filter(Boolean).join(" · ");
+			item.textContent = skill.name || skill.title || "";
+			if (detail) item.append(node("small", "skill-detail", detail));
+			list.append(item);
+		}
+		panel.append(heading, list);
+		section.append(panel);
+	});
+	return section;
+}
+
+function renderPublications(records) {
+	if (!records.length) return null;
+	const section = node("section", "publications-section");
+	section.id = "publications-section";
+	for (const record of records) {
+		const card = node("article", "publication-card");
+		const meta = node("div", "publication-meta");
+		meta.append(node("span", "small-title", "PUBLICATION"));
+		const status = record.publisher || periodLabel(record);
+		if (status) meta.append(node("span", "publication-status", status));
+		card.append(meta);
+		if (record.title) card.append(node("h2", "", record.title));
+		if (record.description) card.append(node("p", "publication-description", record.description));
+		if (record.contribution) {
+			const contribution = node("div", "publication-contribution");
+			contribution.append(node("span", "small-title", "CONTRIBUTION"), node("p", "", record.contribution));
+			card.append(contribution);
+		}
+		if (record.url) appendAction(card, "View publication", record.url);
+		section.append(card);
+	}
+	return section;
+}
+
+function renderSocials(records) {
+	if (!records.length) return null;
+	const section = createSection("socials-section", "about-menu social-section", "Social Media", "Connect with Me");
+	const grid = node("div", "social-grid");
+	for (const record of records) {
+		const platform = record.platform || record.username || "Social profile";
+		const href = safeLink(record.url || "");
+		const platformKey = platform.toLowerCase().replace(/[^a-z0-9]+/g, "");
+		const brand = ["linkedin", "instagram", "tiktok"].find((name) => platformKey.includes(name)) || "generic";
+		const socialClass = `social-${brand}`;
+		const card = node(href ? "a" : "article", `social-card ${socialClass}`);
+		if (href) {
+			card.href = href;
+			card.target = "_blank";
+			card.rel = "noopener noreferrer";
+		}
+		const icon = node("span", "social-icon");
+		const iconUrl = safeLink(record.icon || "");
+		if (iconUrl) {
+			const image = node("img");
+			image.src = iconUrl;
+			image.alt = "";
+			image.loading = "lazy";
+			icon.append(image);
+		} else {
+			icon.textContent = platform.slice(0, 2).toUpperCase();
+		}
+		const copy = node("span", "social-copy");
+		copy.append(node("strong", "", platform));
+		if (record.username) copy.append(node("span", "", record.username));
+		if (record.url) copy.append(node("small", "", record.url.replace(/^https?:\/\//, "")));
+		card.append(icon, copy);
+		if (href) card.append(node("span", "social-arrow", "↗"));
+		grid.append(card);
+	}
+	section.append(grid);
+	return section;
+}
+
+function renderContacts(record) {
+	if (!record || !hasRenderableData(record, "contacts")) return null;
+	const section = node("section", "contact-section");
+	section.id = "contacts-section";
+	const card = node("div", "contact-card");
+	card.append(node("span", "small-title", "GET IN TOUCH"), node("h2", "", "Start a conversation"));
+	if (record.address) card.append(node("p", "", record.address));
+	const details = node("div", "contact-details");
+	for (const [label, value, scheme] of [
+		["EMAIL", record.email, "mailto:"],
+		["PHONE", record.phone, "tel:"],
+		["WHATSAPP", record.whatsapp, "https://wa.me/"],
+		["LINKEDIN", record.linkedin, ""],
+		["INSTAGRAM", record.instagram, ""],
+		["GITHUB", record.github, ""],
+		["WEBSITE", record.website, ""]
+	]) {
+		if (!value) continue;
+		const detail = node("div", "contact-detail");
+		detail.append(node("span", "contact-label", label));
+		const href = scheme.startsWith("https:")
+			? `${scheme}${String(value).replace(/\D/g, "")}`
+			: scheme ? `${scheme}${value}` : safeLink(value);
+		if (href) {
+			const link = node("a", "", value);
+			link.href = href;
+			if (href.startsWith("https:")) {
+				link.target = "_blank";
+				link.rel = "noopener noreferrer";
+			}
+			detail.append(link);
+		} else {
+			detail.append(node("span", "", value));
+		}
+		details.append(detail);
+	}
+	card.append(details);
+	const href = contactAction(record);
+	if (href) {
+		const action = node("a", "contact-button", "Contact me →");
+		action.href = href;
+		if (href.startsWith("https:")) {
+			action.target = "_blank";
+			action.rel = "noopener noreferrer";
+		}
+		card.append(action);
+	}
+	section.append(card);
+	return section;
+}
+
+function addPortfolioNavigation(sections, hasProfile) {
+	const navigation = document.querySelector("#portfolio-navigation");
+	navigation.replaceChildren();
+	const links = [];
+	if (hasProfile) links.push(["About", "#profile-section"]);
+	if (sections.education) links.push(["Education", `#${sections.education.id}`]);
+	for (const [collection, label] of [
+		["experiences", "Experience"], ["organizations", "Organization"], ["projects", "Projects"],
+		["gallery", "Gallery"], ["publications", "Publications"], ["achievements", "Achievements"],
+		["certificates", "Certificates"], ["skills", "Skills"], ["socials", "Social Media"], ["contacts", "Contact"]
+	]) {
+		if (sections[collection]) links.push([label, `#${sections[collection].id}`]);
+	}
+	for (const [label, href] of links) {
+		const link = node("a", "", label);
+		link.href = href;
+		navigation.append(link);
+	}
+}
+
+function renderPortfolio(portfolio) {
+	const profile = portfolio.profiles[0];
+	const contact = { email: profile?.email || "", phone: profile?.phone || "", ...portfolio.contacts[0] };
+	const hasProfile = Boolean(profile && hasRenderableData(profile, "profiles"));
+	if (!preview && !hasProfile) {
+		showState("Portfolio belum dipublikasikan.", "Portfolio ini belum memiliki profile yang dapat ditampilkan.");
+		return false;
+	}
+	if (hasProfile) renderProfile(profile, contact);
+	else document.querySelector("#profile-section").hidden = true;
+
+	const content = Object.fromEntries(collections.map((collection) => [
+		collection,
+		(portfolio[collection] || [])
+			.filter((record) => hasRenderableData(record, collection))
+			.sort((left, right) => (left.order ?? 0) - (right.order ?? 0))
+	]));
+	const sections = {
+		education: renderTimeline("education", content.education, "Education", "Academic Background"),
+		experiences: renderAboutCards(content.experiences, {
+			id: "experiences-section", className: "about-menu organization-section experience-section",
+			label: "Professional Experience", title: "Experience", detail: "Professional and practical experience"
+		}),
+		organizations: renderAboutCards(content.organizations, {
+			id: "organizations-section", className: "about-menu organization-section",
+			label: "Organization", title: "Organizational Involvement"
+		}),
+		projects: renderProjects(content.projects),
+		gallery: renderGallery(content.gallery),
+		publications: renderPublications(content.publications),
+		achievements: renderAboutCards(content.achievements, {
+			id: "achievements-section", label: "Achievements", title: "Achievements and Recognition"
+		}),
+		certificates: renderAboutCards(content.certificates, {
+			id: "certificates-section", label: "Certificates", title: "Certificates and Credentials"
+		}),
+		skills: renderSkills(content.skills),
+		socials: renderSocials(content.socials),
+		contacts: renderContacts(contact)
+	};
+	const sectionOrder = ["education", "experiences", "organizations", "projects", "gallery", "publications", "achievements", "certificates", "skills", "socials", "contacts"];
+	const visibleSections = sectionOrder.map((collection) => sections[collection]).filter(Boolean);
+	document.querySelector("#portfolio-sections").replaceChildren(...visibleSections);
+	addPortfolioNavigation(sections, hasProfile);
+	document.querySelector("#portfolio-explore").hidden = visibleSections.length === 0;
+	return true;
 }
 
 async function currentAuthUser(services) {
@@ -355,25 +692,12 @@ async function load() {
 		}));
 		const portfolio = Object.fromEntries(records);
 		loadStage = "portfolio rendering";
-		const profile = portfolio.profiles[0];
-		const hasProfile = Boolean(profile && hasRenderableData(profile, "profiles"));
-		if (!preview && !hasProfile) {
-			showState(preview ? "Profile belum diisi." : "Portfolio belum dipublikasikan.", "Portfolio ini belum memiliki profile yang dapat ditampilkan.");
-			return;
-		}
-		if (hasProfile) renderProfile(profile);
-		else document.querySelector("#profile-section").hidden = true;
-		for (const collection of collections) {
-			if (collection !== "profiles") {
-				renderCollection(collection, portfolio[collection].filter((record) => hasRenderableData(record, collection)));
-			}
-		}
+		if (!renderPortfolio(portfolio)) return;
 		if (preview) {
 			const badge = node("p", "preview-banner", "Preview pribadi - hanya terlihat oleh Anda");
 			badge.append(createDashboardReturnLink());
 			content.prepend(badge);
 		}
-		if (hasProfile) addProfileNavigation();
 		document.querySelector("#portfolio-year").textContent = String(new Date().getFullYear());
 		state.hidden = true;
 		content.hidden = false;

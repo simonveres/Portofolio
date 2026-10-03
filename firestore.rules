@@ -183,15 +183,11 @@ service cloud.firestore {
 			allow create, update, delete: if isAdmin();
 		}
 
-		match /portfolioSettings/{uid} {
-			allow get: if isAdmin() || isOwner(uid) || isPublishedPortfolio(uid);
+		match /portfolioSettings/{userId} {
+			allow get: if isAdmin() || isOwner(userId) || isPublishedPortfolio(userId);
 			allow list: if isAdmin();
-			allow create: if isAdmin() || (isOwner(uid) && validPortfolioSettings(uid));
-			allow update: if isAdmin()
-				|| (isOwner(uid)
-					&& resource.data.userId == uid
-					&& validPortfolioSettings(uid));
-			allow delete: if isAdmin() || (isOwner(uid) && resource.data.userId == uid);
+			allow create, update: if isAdmin() || (isOwner(userId) && validPortfolioSettings(userId));
+			allow delete: if isAdmin() || isOwner(userId);
 		}
 
 		match /{collection}/{documentId} {
