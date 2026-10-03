@@ -21,6 +21,7 @@ const defaultDesignSettings = {
 const params = new URLSearchParams(window.location.search);
 const username = (params.get("username") || "").toLowerCase();
 const preview = params.get("preview") === "1";
+const previewUid = preview ? params.get("uid") || "" : "";
 const adminPreview = preview && params.get("adminPreview") === "1";
 const designPreview = preview && params.get("designPreview") === "1";
 const content = document.querySelector("#portfolio-content");
@@ -45,8 +46,16 @@ function showState(title, message, linkLabel = "", linkHref = "") {
 		link.textContent = linkLabel;
 		panel.append(link);
 	}
+	if (preview) panel.append(createDashboardReturnLink());
 	state.replaceChildren(panel);
 	state.hidden = false;
+}
+
+function createDashboardReturnLink() {
+	const link = node("a", "preview-return-link", "← Kembali ke Dashboard");
+	link.href = "dashboard/user.html";
+	link.target = "_top";
+	return link;
 }
 
 function safeLink(value) {
@@ -256,7 +265,8 @@ async function currentAuthUser(services) {
 }
 
 async function load() {
-	if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(username)) {
+	if ((username && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(username))
+		|| (!username && !(preview && previewUid))) {
 		showState("Portfolio tidak ditemukan.", "Periksa kembali link portfolio.", "Kembali ke website", "index.html");
 		return;
 	}
@@ -268,12 +278,15 @@ async function load() {
 			return;
 		}
 		const firestore = services.firestoreSdk;
-		const slugSnapshot = await firestore.getDoc(firestore.doc(services.db, "usernames", username));
-		if (!slugSnapshot.exists()) {
-			showState("Portfolio tidak ditemukan.", "Username ini belum terhubung ke portfolio.");
-			return;
+		let ownerUid = previewUid;
+		if (username) {
+			const slugSnapshot = await firestore.getDoc(firestore.doc(services.db, "usernames", username));
+			if (!slugSnapshot.exists()) {
+				showState("Portfolio tidak ditemukan.", "Username ini belum terhubung ke portfolio.");
+				return;
+			}
+			ownerUid = slugSnapshot.data().ownerUid;
 		}
-		const ownerUid = slugSnapshot.data().ownerUid;
 		let admin = false;
 		if (adminPreview && authUser) {
 			const adminSnapshot = await services.firestoreSdk.getDoc(
@@ -302,7 +315,7 @@ async function load() {
 		}));
 		const portfolio = Object.fromEntries(records);
 		const profile = portfolio.profiles[0];
-		if (!profile || !renderProfile(profile)) {
+		if ((!preview && !profile) || !renderProfile(profile || {})) {
 			showState(preview ? "Profile belum diisi." : "Portfolio belum dipublikasikan.", "Portfolio ini belum memiliki profile yang dapat ditampilkan.");
 			return;
 		}
@@ -311,6 +324,7 @@ async function load() {
 		}
 		if (preview) {
 			const badge = node("p", "preview-banner", "Preview pribadi - hanya terlihat oleh Anda");
+			badge.append(createDashboardReturnLink());
 			content.prepend(badge);
 		}
 		addProfileNavigation();

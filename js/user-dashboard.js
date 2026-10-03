@@ -373,19 +373,12 @@ async function showWizardStep(index, persist = true) {
 			openEditor(records[0] || {}, step.collection);
 		}
 	} else if (wizardStepIndex === previewStepIndex) {
-		const username = userRecord.username || "";
-		const previewUrl = username ? new URL(`${publicPortfolioUrl(username)}&preview=1`) : null;
+		const previewUrl = privatePreviewUrl();
 		const openLink = document.querySelector("#wizard-preview-open");
 		const frame = document.querySelector("#wizard-preview-frame");
-		if (previewUrl) {
-			openLink.href = previewUrl.href;
-			frame.src = previewUrl.href;
-			setNotice(document.querySelector("#wizard-preview-notice"), "Preview hanya dapat dilihat oleh pemilik akun.");
-		} else {
-			openLink.removeAttribute("href");
-			frame.removeAttribute("src");
-			setNotice(document.querySelector("#wizard-preview-notice"), "Simpan Profile dan username sebelum melihat preview.", true);
-		}
+		openLink.href = previewUrl.href;
+		frame.src = previewUrl.href;
+		setNotice(document.querySelector("#wizard-preview-notice"), "Preview privat hanya dapat dibuka oleh akun pemilik.");
 	} else {
 		await loadOverview();
 	}
@@ -435,16 +428,9 @@ async function openDesignCustomizer() {
 	designView.hidden = false;
 	designPreviewReady = false;
 	const frame = document.querySelector("#design-preview-frame");
-	if (!userRecord.username) {
-		frame.removeAttribute("src");
-		setNotice(designNotice, "Simpan profile dan username sebelum membuka live preview.", true);
-	} else {
-		const url = new URL(publicPortfolioUrl(userRecord.username));
-		url.searchParams.set("preview", "1");
-		url.searchParams.set("designPreview", "1");
-		frame.src = url.href;
-		setNotice(designNotice, "Perubahan tampilan berlaku untuk portfolio akun ini saja.");
-	}
+	const url = privatePreviewUrl({ designPreview: true });
+	frame.src = url.href;
+	setNotice(designNotice, "Perubahan tampilan berlaku untuk portfolio akun ini saja.");
 	applyDesignDraft();
 	window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -731,6 +717,17 @@ function publicPortfolioUrl(username) {
 	return url.href;
 }
 
+function privatePreviewUrl({ designPreview = false } = {}) {
+	const profile = recordsByCollection.profiles?.[0] || {};
+	const username = userRecord.username || profile.username || "";
+	const url = new URL("../portfolio.html", window.location.href);
+	if (username) url.searchParams.set("username", username);
+	else url.searchParams.set("uid", currentUser.uid);
+	url.searchParams.set("preview", "1");
+	if (designPreview) url.searchParams.set("designPreview", "1");
+	return url;
+}
+
 async function loadPlatformSettings() {
 	const firestore = services.firestoreSdk;
 	const snapshot = await firestore.getDoc(firestore.doc(services.db, "settings", "platform"));
@@ -750,10 +747,8 @@ function formatPortfolioPrice(settings) {
 function renderPortfolioActions(profile) {
 	const username = userRecord.username || profile.username || "";
 	const preview = document.querySelector("#preview-portfolio-link");
-	preview.href = username
-		? `${publicPortfolioUrl(username)}&preview=1`
-		: "#";
-	preview.setAttribute("aria-disabled", String(!username));
+	preview.href = privatePreviewUrl().href;
+	preview.setAttribute("aria-disabled", "false");
 
 	const published = userRecord.portfolioStatus === "published" && Boolean(username);
 	const active = userRecord.accountStatus === "active"
@@ -920,12 +915,6 @@ async function start() {
 	document.querySelector("#reset-design-button").addEventListener("click", resetDesign);
 	window.addEventListener("message", handleDesignPreviewMessage);
 	document.querySelector("#pay-whatsapp-button").addEventListener("click", requestPayment);
-	document.querySelector("#preview-portfolio-link").addEventListener("click", (event) => {
-		if (!userRecord?.username) {
-			event.preventDefault();
-			setNotice(overviewNotice, "Simpan Profile dan username terlebih dahulu.", true);
-		}
-	});
 	for (const button of document.querySelectorAll("#user-logout, #user-sidebar-logout")) {
 		button.addEventListener("click", async () => {
 			userStatusUnsubscribe?.();

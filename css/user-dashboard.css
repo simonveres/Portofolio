@@ -96,6 +96,7 @@
 .builder-gallery-card .builder-card-image { aspect-ratio: 4 / 3; }
 .builder-portfolio .nav-menu a { white-space: nowrap; }
 .preview-banner { grid-column: 1 / -1; padding: 10px 16px; border-left: 3px solid #286a53; background: #e6f1eb; color: #205540; }
+.preview-return-link { display: inline-flex; min-height: 38px; margin-top: 8px; padding: 8px 12px; align-items: center; border: 1px solid currentColor; border-radius: 5px; color: inherit; font-size: 13px; font-weight: 700; text-decoration: none; }
 .portfolio-state { min-height: 55vh; padding: 80px 24px; display: grid; place-items: center; text-align: center; }
 .portfolio-state h1 { margin: 8px 0; }
 .portfolio-state p:not(.page-label) { color: #657386; }
