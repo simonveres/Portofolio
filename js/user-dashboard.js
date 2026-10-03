@@ -770,6 +770,7 @@ function renderPortfolioActions(profile) {
 	const preview = document.querySelector("#preview-portfolio-link");
 	preview.href = privatePreviewUrl().href;
 	preview.setAttribute("aria-disabled", "false");
+	document.querySelector("#user-preview-shortcut").href = preview.href;
 
 	const published = userRecord.portfolioStatus === "published" && Boolean(username);
 	const active = userRecord.accountStatus === "active"
@@ -894,6 +895,7 @@ async function initializeForUser(user) {
 		window.location.replace("../login.html");
 		return;
 	}
+	document.querySelector("#user-preview-shortcut").href = privatePreviewUrl().href;
 	await loadDesignSettings();
 	dashboard.hidden = false;
 	fallbackNotice.hidden = true;

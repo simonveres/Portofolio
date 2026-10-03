@@ -178,8 +178,21 @@ function renderProfile(profile) {
 		imageNode.alt = profile.name ? `${profile.name} profile` : "Profile photo";
 		imageNode.hidden = false;
 	}
+	const heroCopy = document.querySelector(".builder-hero-copy");
+	for (const [key, label] of [["university", "University"], ["gpa", "GPA"], ["email", "Email"], ["phone", "Phone"]]) {
+		if (profile[key]) heroCopy.append(node("p", "builder-location", `${label}: ${profile[key]}`));
+	}
+	if (profile.cvUrl) appendLink(heroCopy, "Download CV", profile.cvUrl);
 	setMetadata(profile);
 	return true;
+}
+
+function hasRenderableData(record, collection = "") {
+	const ignored = ["id", "userId", "published", "order", "createdAt", "updatedAt"];
+	if (collection === "profiles") ignored.push("username");
+	return Object.entries(record).some(([key, value]) => !ignored.includes(key)
+		&& ((typeof value === "string" && value.trim() !== "")
+			|| (typeof value === "number" && Number.isFinite(value))));
 }
 
 function renderCard(collection, record) {
@@ -195,10 +208,13 @@ function renderCard(collection, record) {
 		card.append(image);
 	}
 	const content = node("div", "builder-card-copy");
-	content.append(node("h3", "", title));
+	if (title) content.append(node("h3", "", title));
 	const subtitle = record.company || record.degree || record.field || record.issuer || record.publisher
 		|| record.category || record.level || record.username || "";
 	if (subtitle) content.append(node("p", "builder-card-subtitle", subtitle));
+	if (record.position && title !== record.position) content.append(node("p", "builder-card-subtitle", record.position));
+	if (record.location) content.append(node("p", "builder-card-subtitle", record.location));
+	if (record.address) content.append(node("p", "builder-card-description", record.address));
 	const period = [record.startDate, record.endDate].filter(Boolean).join(" - ") || record.date || "";
 	if (period) content.append(node("small", "builder-card-period", period));
 	if (record.description) content.append(node("p", "builder-card-description", record.description));
@@ -211,6 +227,7 @@ function renderCard(collection, record) {
 		appendLink(content, "View project", record.projectUrl);
 		appendLink(content, "GitHub", record.githubUrl);
 	}
+	if (record.icon) appendLink(content, "Icon", record.icon);
 	if (collection === "publications" || collection === "achievements") appendLink(content, "View details", record.url);
 	if (collection === "certificates") appendLink(content, "View certificate", record.certificateUrl);
 	if (collection === "contacts") {
@@ -270,16 +287,21 @@ async function load() {
 		showState("Portfolio tidak ditemukan.", "Periksa kembali link portfolio.", "Kembali ke website", "index.html");
 		return;
 	}
+	let loadStage = "Firebase initialization";
+	let ownerUid = previewUid;
+	let authUid = "";
 	try {
 		const services = await getFirebaseServices();
+		loadStage = "Firebase Auth state";
 		const authUser = preview ? await currentAuthUser(services) : null;
+		authUid = authUser?.uid || "";
 		if (preview && !authUser) {
 			showState("Preview pribadi.", "Masuk ke akun pemilik untuk melihat preview.", "Masuk", "login.html");
 			return;
 		}
 		const firestore = services.firestoreSdk;
-		let ownerUid = previewUid;
 		if (username) {
+			loadStage = `usernames/${username} lookup`;
 			const slugSnapshot = await firestore.getDoc(firestore.doc(services.db, "usernames", username));
 			if (!slugSnapshot.exists()) {
 				showState("Portfolio tidak ditemukan.", "Username ini belum terhubung ke portfolio.");
@@ -289,6 +311,7 @@ async function load() {
 		}
 		let admin = false;
 		if (adminPreview && authUser) {
+			loadStage = `admins/${authUser.uid} lookup`;
 			const adminSnapshot = await services.firestoreSdk.getDoc(
 				services.firestoreSdk.doc(services.db, "admins", authUser.uid)
 			);
@@ -299,41 +322,74 @@ async function load() {
 			return;
 		}
 		if (preview && !admin) enableOwnerDesignPreview(ownerUid, authUser);
+		loadStage = `portfolioSettings/${ownerUid} lookup`;
 		const designSnapshot = await firestore.getDoc(firestore.doc(services.db, "portfolioSettings", ownerUid));
 		const savedDesign = designSnapshot.exists() && designSnapshot.data().userId === ownerUid
 			? designSnapshot.data()
 			: null;
 		applyPortfolioDesign(savedDesign);
+		loadStage = "portfolio collection reads";
 		const records = await Promise.all(collections.map(async (collection) => {
-			const constraints = [firestore.where("userId", "==", ownerUid)];
-			if (!preview) constraints.push(firestore.where("published", "==", true));
-			const snapshot = await firestore.getDocs(firestore.query(
-				firestore.collection(services.db, collection),
-				...constraints
-			));
-			return [collection, snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))];
+			try {
+				if (["profiles", "contacts"].includes(collection)) {
+					const snapshot = await firestore.getDoc(firestore.doc(services.db, collection, ownerUid));
+					if (!snapshot.exists()) return [collection, []];
+					const record = { id: snapshot.id, ...snapshot.data() };
+					return [collection, !preview && record.published !== true ? [] : [record]];
+				}
+				const constraints = [firestore.where("userId", "==", ownerUid)];
+				if (!preview) constraints.push(firestore.where("published", "==", true));
+				const snapshot = await firestore.getDocs(firestore.query(
+					firestore.collection(services.db, collection),
+					...constraints
+				));
+				return [collection, snapshot.docs.map((item) => ({ id: item.id, ...item.data() }))];
+			} catch (error) {
+				console.error(`Portfolio ${preview ? "preview" : "public"} read failed for ${collection}:`, {
+					ownerUid,
+					authUid,
+					code: error.code || "unknown"
+				}, error);
+				throw error;
+			}
 		}));
 		const portfolio = Object.fromEntries(records);
+		loadStage = "portfolio rendering";
 		const profile = portfolio.profiles[0];
-		if ((!preview && !profile) || !renderProfile(profile || {})) {
+		const hasProfile = Boolean(profile && hasRenderableData(profile, "profiles"));
+		if (!preview && !hasProfile) {
 			showState(preview ? "Profile belum diisi." : "Portfolio belum dipublikasikan.", "Portfolio ini belum memiliki profile yang dapat ditampilkan.");
 			return;
 		}
+		if (hasProfile) renderProfile(profile);
+		else document.querySelector("#profile-section").hidden = true;
 		for (const collection of collections) {
-			if (collection !== "profiles") renderCollection(collection, portfolio[collection]);
+			if (collection !== "profiles") {
+				renderCollection(collection, portfolio[collection].filter((record) => hasRenderableData(record, collection)));
+			}
 		}
 		if (preview) {
 			const badge = node("p", "preview-banner", "Preview pribadi - hanya terlihat oleh Anda");
 			badge.append(createDashboardReturnLink());
 			content.prepend(badge);
 		}
-		addProfileNavigation();
+		if (hasProfile) addProfileNavigation();
 		document.querySelector("#portfolio-year").textContent = String(new Date().getFullYear());
 		state.hidden = true;
 		content.hidden = false;
 	} catch (error) {
-		console.error("Portfolio load failed:", error);
-		showState(preview ? "Preview tidak tersedia." : "Portfolio ini belum tersedia.", "Data belum dapat dimuat. Coba lagi nanti.", "Kembali ke website", "index.html");
+		console.error(preview ? "Preview load error:" : "Public portfolio load error:", {
+			stage: loadStage,
+			username: username || null,
+			ownerUid: ownerUid || null,
+			authUid: authUid || null,
+			code: error.code || "unknown",
+			message: error.message || String(error)
+		}, error);
+		const detail = preview
+			? `Gagal pada tahap ${loadStage}${error.code ? ` (${error.code})` : ""}: ${error.message || "Unknown error"}`
+			: "Data belum dapat dimuat. Coba lagi nanti.";
+		showState(preview ? "Preview tidak tersedia." : "Portfolio ini belum tersedia.", detail, "Kembali ke website", "index.html");
 	}
 }
 
