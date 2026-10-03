@@ -653,9 +653,9 @@ async function deleteEntry(entry, collection) {
 async function loadOverview() {
 	try {
 		const collections = Object.keys(portfolioCollections);
-		const [results, platformSettings] = await Promise.all([
+		const [results, platformSettingsResult] = await Promise.all([
 			Promise.all(collections.map((name) => fetchCollection(name))),
-			loadPlatformSettings()
+			loadPlatformSettings().then((settings) => ({ settings }), (error) => ({ error }))
 		]);
 		recordsByCollection = Object.fromEntries(collections.map((name, index) => [name, results[index]]));
 		const profile = recordsByCollection.profiles[0] || {};
@@ -667,7 +667,19 @@ async function loadOverview() {
 			item.textContent = statusLabel(userRecord[status]);
 			item.dataset.state = userRecord[status] || "";
 		}
-		document.querySelector("#portfolio-price").textContent = formatPortfolioPrice(platformSettings);
+		const priceNode = document.querySelector("#portfolio-price");
+		if (platformSettingsResult.error) {
+			priceNode.textContent = "Harga tidak tersedia";
+			setNotice(overviewNotice, `Harga publikasi belum tersedia: ${platformSettingsResult.error.message}`, true);
+		} else {
+			try {
+				priceNode.textContent = formatPortfolioPrice(platformSettingsResult.settings);
+				setNotice(overviewNotice, "");
+			} catch (error) {
+				priceNode.textContent = "Harga tidak tersedia";
+				setNotice(overviewNotice, `Harga publikasi belum tersedia: ${error.message}`, true);
+			}
+		}
 		renderCompletion(profile);
 		renderPortfolioActions(profile);
 		const paymentText = ({
@@ -677,7 +689,6 @@ async function loadOverview() {
 			rejected: "Pembayaran ditolak. Silakan hubungi admin kembali."
 		})[userRecord.paymentStatus] || "Lengkapi portfolio kamu, lalu hubungi admin untuk aktivasi.";
 		setNotice(document.querySelector("#payment-message"), paymentText);
-		setNotice(overviewNotice, "");
 	} catch (error) {
 		setNotice(overviewNotice, showError(error, "Gagal memuat portfolio."), true);
 	}
@@ -731,17 +742,27 @@ function privatePreviewUrl({ designPreview = false } = {}) {
 async function loadPlatformSettings() {
 	const firestore = services.firestoreSdk;
 	const snapshot = await firestore.getDoc(firestore.doc(services.db, "settings", "platform"));
-	return snapshot.exists() ? snapshot.data() : {};
+	if (!snapshot.exists()) throw new Error("Dokumen settings/platform belum dibuat oleh admin.");
+	return snapshot.data();
 }
 
-function formatPortfolioPrice(settings) {
-	const price = Number(settings.portfolioPrice || 0);
-	const currency = /^[A-Z]{3}$/.test(settings.currency || "") ? settings.currency : "IDR";
+function formatPortfolioPrice(settings, { compact = false } = {}) {
+	if (!Number.isFinite(settings?.portfolioPrice)) {
+		throw new Error("Field portfolioPrice belum diatur sebagai angka di settings/platform.");
+	}
+	if (typeof settings.currency !== "string" || !settings.currency.trim()) {
+		throw new Error("Field currency belum diatur di settings/platform.");
+	}
+	const currency = settings.currency.trim();
+	if (!/^[A-Z]{3}$/.test(currency)) {
+		const amount = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(settings.portfolioPrice);
+		return `${currency}${compact ? "" : " "}${amount}`;
+	}
 	return new Intl.NumberFormat("id-ID", {
 		style: "currency",
 		currency,
 		maximumFractionDigits: 0
-	}).format(Number.isFinite(price) ? price : 0);
+	}).format(settings.portfolioPrice);
 }
 
 function renderPortfolioActions(profile) {
@@ -806,14 +827,21 @@ async function requestPayment() {
 			return;
 		}
 		if (number.startsWith("0")) number = `62${number.slice(1)}`;
+		if (!/^\d{8,15}$/.test(number)) {
+			whatsappWindow?.close();
+			setNotice(overviewNotice, "Nomor WhatsApp admin di settings/platform tidak valid.", true);
+			return;
+		}
 		const profile = recordsByCollection.profiles?.[0] || {};
-		const priceText = formatPortfolioPrice(config);
+		const priceText = formatPortfolioPrice(config, { compact: true });
 		const message = [
 			"Halo Admin, saya ingin melakukan pembayaran untuk publikasi portfolio saya.",
 			`Nama: ${profile.name || userRecord.name || ""}`,
 			`Username: ${userRecord.username || profile.username || ""}`,
 			`Email: ${currentUser.email || ""}`,
-			`Harga Portfolio: ${priceText}`,
+			`Harga Publikasi: ${priceText}`,
+			"",
+			"Saya ingin melakukan pembayaran untuk mengaktifkan dan mempublikasikan portfolio saya.",
 			"",
 			"Mohon informasi pembayaran selanjutnya.",
 			"",
