@@ -36,14 +36,17 @@
 							<article class="user-status"><span>Pembayaran</span><strong data-user-status="paymentStatus">Belum dibayar</strong></article>
 							<article class="user-status"><span>Portfolio</span><strong data-user-status="portfolioStatus">Draft</strong></article>
 						</div>
+						<article class="user-status user-price"><span>Harga Publikasi</span><strong id="portfolio-price">Memuat harga...</strong></article>
 						<div class="user-actions">
-							<button class="button button-primary" id="publish-portfolio-button" type="button">Publikasikan Portfolio</button>
+							<button class="button button-primary" id="pay-whatsapp-button" type="button" hidden>💬 Bayar via WhatsApp</button>
+							<button class="button button-primary" id="publish-portfolio-button" type="button" disabled>Publikasi oleh Admin</button>
 							<a class="button button-quiet" id="preview-portfolio-link" href="../portfolio.html?preview=1" target="_blank" rel="noopener noreferrer">Preview Portfolio</a>
 							<button class="button button-quiet" id="copy-portfolio-link" type="button" hidden>Copy Link</button>
 							<button class="button button-quiet" id="share-portfolio-link" type="button" hidden>Share Portfolio</button>
 						</div>
 						<p class="portfolio-link-display" id="portfolio-link-display" hidden></p>
 						<p class="user-message" id="payment-message" role="status" aria-live="polite"></p>
+						<p class="user-message">Setelah pembayaran dilakukan, admin akan memverifikasi pembayaran sebelum portfolio dipublikasikan.</p>
 						<div class="user-progress"><div class="progress-heading"><h2>Portfolio Completion</h2><strong id="completion-label">0%</strong></div><progress id="completion-progress" max="100" value="0">0%</progress><div id="completion-sections" class="completion-sections"></div></div>
 					</div>
 					<div id="user-collection-view" hidden>

@@ -18,6 +18,8 @@
 .user-status { min-height: 112px; padding: 17px; display: grid; align-content: space-between; border: 1px solid var(--line); border-radius: 6px; background: var(--white); }
 .user-status span { color: var(--muted); font-size: 13px; font-weight: 650; }
 .user-status strong { color: var(--deep-blue); font-size: 20px; }
+.user-price { min-height: 88px; margin-top: 12px; }
+.user-price strong { font-size: 24px; }
 .user-status strong[data-state="pending"], .user-status strong[data-state="unpaid"], .user-status strong[data-state="draft"], .user-status strong[data-state="rejected"] { color: #8b5700; }
 .user-status strong[data-state="active"], .user-status strong[data-state="paid"], .user-status strong[data-state="published"] { color: var(--green); }
 .user-actions { margin: 20px 0 4px; display: flex; flex-wrap: wrap; gap: 8px; }

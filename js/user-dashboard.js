@@ -667,7 +667,10 @@ async function deleteEntry(entry, collection) {
 async function loadOverview() {
 	try {
 		const collections = Object.keys(portfolioCollections);
-		const results = await Promise.all(collections.map((name) => fetchCollection(name)));
+		const [results, platformSettings] = await Promise.all([
+			Promise.all(collections.map((name) => fetchCollection(name))),
+			loadPlatformSettings()
+		]);
 		recordsByCollection = Object.fromEntries(collections.map((name, index) => [name, results[index]]));
 		const profile = recordsByCollection.profiles[0] || {};
 		const name = profile.name || userRecord.name || currentUser.email || "Portfolio saya";
@@ -678,13 +681,14 @@ async function loadOverview() {
 			item.textContent = statusLabel(userRecord[status]);
 			item.dataset.state = userRecord[status] || "";
 		}
+		document.querySelector("#portfolio-price").textContent = formatPortfolioPrice(platformSettings);
 		renderCompletion(profile);
 		renderPortfolioActions(profile);
 		const paymentText = ({
-			unpaid: "Portfolio kamu siap dilengkapi. Untuk mengaktifkan link publik, hubungi admin mengenai pembayaran.",
-			pending: "Pembayaran sedang diproses oleh admin.",
-			paid: "Pembayaran telah dikonfirmasi.",
-			rejected: "Pembayaran belum dapat dikonfirmasi. Kamu dapat menghubungi admin kembali."
+			unpaid: "Pembayaran belum dilakukan.",
+			pending: "Pembayaran sedang menunggu verifikasi admin.",
+			paid: "Pembayaran telah diverifikasi.",
+			rejected: "Pembayaran ditolak. Silakan hubungi admin kembali."
 		})[userRecord.paymentStatus] || "Lengkapi portfolio kamu, lalu hubungi admin untuk aktivasi.";
 		setNotice(document.querySelector("#payment-message"), paymentText);
 		setNotice(overviewNotice, "");
@@ -727,6 +731,22 @@ function publicPortfolioUrl(username) {
 	return url.href;
 }
 
+async function loadPlatformSettings() {
+	const firestore = services.firestoreSdk;
+	const snapshot = await firestore.getDoc(firestore.doc(services.db, "settings", "platform"));
+	return snapshot.exists() ? snapshot.data() : {};
+}
+
+function formatPortfolioPrice(settings) {
+	const price = Number(settings.portfolioPrice || 0);
+	const currency = /^[A-Z]{3}$/.test(settings.currency || "") ? settings.currency : "IDR";
+	return new Intl.NumberFormat("id-ID", {
+		style: "currency",
+		currency,
+		maximumFractionDigits: 0
+	}).format(Number.isFinite(price) ? price : 0);
+}
+
 function renderPortfolioActions(profile) {
 	const username = userRecord.username || profile.username || "";
 	const preview = document.querySelector("#preview-portfolio-link");
@@ -735,19 +755,22 @@ function renderPortfolioActions(profile) {
 		: "#";
 	preview.setAttribute("aria-disabled", String(!username));
 
+	const published = userRecord.portfolioStatus === "published" && Boolean(username);
 	const active = userRecord.accountStatus === "active"
 		&& userRecord.paymentStatus === "paid"
-		&& userRecord.portfolioStatus === "published";
+		&& published;
 	const publishButton = document.querySelector("#publish-portfolio-button");
-	publishButton.textContent = active ? "Portfolio Aktif" : "Publikasikan Portfolio";
-	publishButton.disabled = active;
+	publishButton.textContent = active ? "Portfolio Aktif" : "Publikasi oleh Admin";
+	publishButton.disabled = true;
+	const whatsappButton = document.querySelector("#pay-whatsapp-button");
+	whatsappButton.hidden = !["unpaid", "rejected"].includes(userRecord.paymentStatus);
 	const copy = document.querySelector("#copy-portfolio-link");
 	const share = document.querySelector("#share-portfolio-link");
 	const linkDisplay = document.querySelector("#portfolio-link-display");
-	copy.hidden = !active || !username;
-	share.hidden = !active || !username;
-	linkDisplay.hidden = !active || !username;
-	if (!active || !username) return;
+	copy.hidden = !published;
+	share.hidden = !published;
+	linkDisplay.hidden = !published;
+	if (!published) return;
 	const link = publicPortfolioUrl(username);
 	linkDisplay.replaceChildren();
 	const publicLink = document.createElement("a");
@@ -772,42 +795,38 @@ function renderPortfolioActions(profile) {
 async function requestPayment() {
 	let whatsappWindow;
 	try {
-		if (userRecord.paymentStatus === "paid") {
-			setNotice(overviewNotice, "Portfolio sudah aktif.");
+		if (!["unpaid", "rejected"].includes(userRecord.paymentStatus)) {
+			setNotice(overviewNotice, userRecord.paymentStatus === "pending"
+				? "Pembayaran sedang menunggu verifikasi admin."
+				: "Pembayaran telah diverifikasi.");
 			return;
 		}
 		whatsappWindow = window.open("about:blank", "_blank");
 		if (whatsappWindow) whatsappWindow.opener = null;
-		const firestore = services.firestoreSdk;
-		const settings = await firestore.getDoc(firestore.doc(services.db, "settings", "platform"));
-		const config = settings.exists() ? settings.data() : {};
-		const number = String(config.whatsappNumber || "").replace(/\D/g, "");
+		const config = await loadPlatformSettings();
+		let number = String(config.whatsappNumber || "").replace(/\D/g, "");
 		if (!number) {
 			whatsappWindow?.close();
-			setNotice(overviewNotice, "WhatsApp admin belum diatur. Silakan hubungi admin.", true);
+			setNotice(overviewNotice, "WhatsApp admin belum diatur.", true);
 			return;
 		}
-		if (["unpaid", "rejected"].includes(userRecord.paymentStatus)) {
-			await firestore.updateDoc(firestore.doc(services.db, "users", currentUser.uid), {
-				paymentStatus: "pending",
-				updatedAt: firestore.serverTimestamp()
-			});
-			userRecord.paymentStatus = "pending";
-		}
+		if (number.startsWith("0")) number = `62${number.slice(1)}`;
 		const profile = recordsByCollection.profiles?.[0] || {};
+		const priceText = formatPortfolioPrice(config);
 		const message = [
-			"Halo Admin, saya ingin membuat/mengaktifkan portfolio.",
+			"Halo Admin, saya ingin melakukan pembayaran untuk publikasi portfolio saya.",
 			`Nama: ${profile.name || userRecord.name || ""}`,
-			`Username: ${userRecord.username || "belum ditentukan"}`,
+			`Username: ${userRecord.username || profile.username || ""}`,
 			`Email: ${currentUser.email || ""}`,
-			"Saya ingin melakukan konsultasi dan pembayaran untuk portfolio."
+			`Harga Portfolio: ${priceText}`,
+			"",
+			"Mohon informasi pembayaran selanjutnya.",
+			"",
+			"Terima kasih."
 		].join("\n");
-		const price = Number(config.portfolioPrice || 0);
-		const priceText = price ? ` Harga saat ini: ${new Intl.NumberFormat("id-ID", { style: "currency", currency: config.currency || "IDR", maximumFractionDigits: 0 }).format(price)}.` : "";
-		setNotice(document.querySelector("#payment-message"), `Portfolio kamu sudah siap! Silakan lanjutkan konsultasi dan pembayaran via WhatsApp.${priceText}`);
+		setNotice(document.querySelector("#payment-message"), "WhatsApp terbuka. Status pembayaran tetap belum dibayar sampai diverifikasi admin.");
 		if (whatsappWindow) whatsappWindow.location.href = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 		else window.location.href = `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
-		await loadOverview();
 	} catch (error) {
 		whatsappWindow?.close();
 		setNotice(overviewNotice, showError(error, "Tidak dapat menghubungi admin saat ini."), true);
@@ -900,7 +919,7 @@ async function start() {
 	designForm.addEventListener("submit", saveDesign);
 	document.querySelector("#reset-design-button").addEventListener("click", resetDesign);
 	window.addEventListener("message", handleDesignPreviewMessage);
-	document.querySelector("#publish-portfolio-button").addEventListener("click", requestPayment);
+	document.querySelector("#pay-whatsapp-button").addEventListener("click", requestPayment);
 	document.querySelector("#preview-portfolio-link").addEventListener("click", (event) => {
 		if (!userRecord?.username) {
 			event.preventDefault();

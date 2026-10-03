@@ -752,6 +752,7 @@ let currentAdminUser = null;
 async function updateManagedUser(user, action, services) {
     const descriptions = {
         approve: `Konfirmasi pembayaran ${user.name || user.email} dan publikasikan portfolio?`,
+        pending: `Tandai pembayaran ${user.name || user.email} sedang menunggu verifikasi?`,
         reject: `Tolak pembayaran ${user.name || user.email}?`,
         suspend: `Nonaktifkan akun ${user.name || user.email}?`,
         activate: `Aktifkan akun ${user.name || user.email}?`,
@@ -760,6 +761,7 @@ async function updateManagedUser(user, action, services) {
     if (!window.confirm(descriptions[action])) return;
     const firestore = services.firestoreSdk;
     const changes = { updatedAt: firestore.serverTimestamp() };
+    if (action === "pending") changes.paymentStatus = "pending";
     if (action === "approve") Object.assign(changes, {
         paymentStatus: "paid",
         accountStatus: "active",
@@ -778,7 +780,7 @@ async function updateManagedUser(user, action, services) {
     try {
         await firestore.updateDoc(firestore.doc(services.db, "users", user.uid), changes);
         setNotice(managementNotice, "Status user berhasil diperbarui.");
-        await loadAdminManagementView(action === "approve" || action === "reject" ? "payments" : "users", services, currentAdminUser);
+        await loadAdminManagementView(["approve", "pending", "reject"].includes(action) ? "payments" : "users", services, currentAdminUser);
     } catch (error) {
         console.error("User status update failed:", error);
         setNotice(managementNotice, `Gagal memperbarui status: ${error.message}`, true);
@@ -851,6 +853,8 @@ async function loadAdminManagementView(view, services, adminUser) {
                 if (user.paymentStatus === "pending") {
                     actions.append(managementButton("Approve", "button-primary", () => updateManagedUser(user, "approve", services)));
                     actions.append(managementButton("Reject", "button-danger", () => updateManagedUser(user, "reject", services)));
+                } else if (["unpaid", "rejected"].includes(user.paymentStatus || "unpaid")) {
+                    actions.append(managementButton("Mark pending", "button-quiet", () => updateManagedUser(user, "pending", services)));
                 }
             } else {
                 if (user.username) actions.append(managementLink("Open portfolio", user.username));
