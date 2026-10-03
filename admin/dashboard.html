@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex, nofollow">
+	<title>Dashboard | Simon Veres Sianturi</title>
+	<link rel="stylesheet" href="../css/admin.css">
+	<script src="../js/firebase-config.js"></script>
+	<script src="../js/firebase-config-bridge.js"></script>
+	<script type="module" src="../js/firebase-admin.js"></script>
+</head>
+<body>
+	<main class="admin-shell">
+		<section class="dashboard" id="dashboard" hidden>
+			<header class="dashboard-header">
+				<a class="admin-brand" href="../index.html"><span>SV</span> Portfolio Admin</a>
+				<div class="account-tools">
+					<span id="account-email"></span>
+					<button class="button button-quiet" id="logout-button" type="button">Sign out</button>
+				</div>
+			</header>
+			<div class="dashboard-layout">
+				<aside class="dashboard-sidebar">
+					<p class="eyebrow">PORTFOLIO CMS</p>
+					<nav class="dashboard-nav" aria-label="Admin navigation">
+						<button class="dashboard-nav-item is-active" type="button" data-view="overview" aria-current="page">Dashboard</button>
+						<button class="dashboard-nav-item" type="button" data-admin-view="users">Users</button>
+						<button class="dashboard-nav-item" type="button" data-admin-view="payments">Payments</button>
+						<button class="dashboard-nav-item" type="button" data-admin-view="portfolios">Portfolios</button>
+						<button class="dashboard-nav-item" type="button" data-admin-view="settings">Settings</button>
+						<p class="eyebrow admin-nav-divider">PORTFOLIO DEMO</p>
+						<button class="dashboard-nav-item" type="button" data-collection="profiles">Profile</button>
+						<button class="dashboard-nav-item" type="button" data-collection="experiences">Experience</button>
+						<button class="dashboard-nav-item" type="button" data-collection="organizations">Organization</button>
+						<button class="dashboard-nav-item" type="button" data-collection="projects">Projects</button>
+						<button class="dashboard-nav-item" type="button" data-collection="gallery">Gallery</button>
+						<button class="dashboard-nav-item" type="button" data-collection="publications">Publications</button>
+						<button class="dashboard-nav-item" type="button" data-collection="achievements">Achievements</button>
+						<button class="dashboard-nav-item" type="button" data-collection="certificates">Certificates</button>
+						<button class="dashboard-nav-item" type="button" data-collection="education">Education</button>
+						<button class="dashboard-nav-item" type="button" data-collection="skills">Skills</button>
+						<button class="dashboard-nav-item" type="button" data-collection="socials">Social Media</button>
+						<button class="dashboard-nav-item" type="button" data-collection="contacts">Contact</button>
+						<button class="dashboard-nav-item dashboard-nav-logout" id="sidebar-logout-button" type="button">Logout</button>
+					</nav>
+				</aside>
+				<section class="content-panel" aria-labelledby="collection-title">
+					<div id="dashboard-overview">
+						<div class="panel-heading">
+							<div><p class="eyebrow">FIREBASE CMS</p><h1>Dashboard</h1></div>
+							<p id="overview-notice" class="notice" role="status" aria-live="polite"></p>
+						</div>
+						<div class="stats-grid" aria-label="Portfolio data counts">
+							<article class="stat-item"><span>Profile</span><strong data-stat="profiles">0</strong></article>
+							<article class="stat-item"><span>Experience</span><strong data-stat="experiences">0</strong></article>
+							<article class="stat-item"><span>Organization</span><strong data-stat="organizations">0</strong></article>
+							<article class="stat-item"><span>Projects</span><strong data-stat="projects">0</strong></article>
+							<article class="stat-item"><span>Gallery</span><strong data-stat="gallery">0</strong></article>
+							<article class="stat-item"><span>Publications</span><strong data-stat="publications">0</strong></article>
+							<article class="stat-item"><span>Achievements</span><strong data-stat="achievements">0</strong></article>
+							<article class="stat-item"><span>Certificates</span><strong data-stat="certificates">0</strong></article>
+						</div>
+					</div>
+					<div id="collection-view" hidden>
+						<div class="panel-heading">
+							<div><p class="eyebrow">FIRESTORE COLLECTION</p><h1 id="collection-title">Profile</h1></div>
+							<div class="collection-tools">
+								<p id="dashboard-notice" class="notice" role="status" aria-live="polite"></p>
+								<button class="button button-primary" id="new-entry-button" type="button">+ Tambah Data</button>
+							</div>
+						</div>
+						<div class="manager-grid">
+							<div class="entry-list" id="entry-list" aria-label="Saved content"></div>
+							<form id="entry-form" class="admin-form editor-form" hidden>
+								<div id="editor-fields"></div>
+								<div class="editor-actions">
+									<button class="button button-primary" type="submit">Save</button>
+									<button class="button button-quiet" id="cancel-edit-button" type="button">Cancel</button>
+								</div>
+							</form>
+						</div>
+					</div>
+					<div id="admin-management-view" hidden>
+						<div class="panel-heading"><div><p class="eyebrow">PLATFORM MANAGEMENT</p><h1 id="management-title">Users</h1></div><p class="notice" id="management-notice" role="status" aria-live="polite"></p></div>
+						<div class="admin-table-wrap" id="management-table-wrap"><table class="admin-table"><thead id="management-head"></thead><tbody id="management-rows"></tbody></table></div>
+						<form id="platform-settings-form" class="admin-form editor-form" hidden>
+							<div class="field-group"><label for="platform-name">Platform Name</label><input id="platform-name" name="platformName" required></div>
+							<div class="field-group"><label for="platform-whatsapp">WhatsApp Admin Number</label><input id="platform-whatsapp" name="whatsappNumber" inputmode="numeric" placeholder="628xxxxxxxxxx"></div>
+							<div class="field-group"><label for="platform-price">Portfolio Price</label><input id="platform-price" name="portfolioPrice" type="number" min="0" step="1000" required></div>
+							<div class="field-group"><label for="platform-currency">Currency</label><input id="platform-currency" name="currency" value="IDR" maxlength="3" required></div>
+							<div class="editor-actions"><button class="button button-primary" type="submit">Save Settings</button></div>
+						</form>
+					</div>
+				</section>
+			</div>
+		</section>
+		<p class="notice admin-global-notice" id="dashboard-notice-fallback" role="status" aria-live="polite">Checking Firebase setup...</p>
+	</main>
+</body>
+</html>

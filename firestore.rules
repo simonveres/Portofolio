@@ -1,0 +1,221 @@
+rules_version = '2';
+service cloud.firestore {
+	match /databases/{database}/documents {
+		function isSignedIn() {
+			return request.auth != null;
+		}
+
+		function isAdmin() {
+			return isSignedIn()
+				&& get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+		}
+
+		function isOwner(userId) {
+			return isSignedIn() && request.auth.uid == userId;
+		}
+
+		function userPath(userId) {
+			return /databases/$(database)/documents/users/$(userId);
+		}
+
+		function isPublishedPortfolio(userId) {
+			return userId is string
+				&& exists(userPath(userId))
+				&& get(userPath(userId)).data.accountStatus == 'active'
+				&& get(userPath(userId)).data.paymentStatus == 'paid'
+				&& get(userPath(userId)).data.portfolioStatus == 'published';
+		}
+
+		function validPortfolioSettings(uid) {
+			return request.resource.data.keys().hasOnly([
+				'userId', 'template', 'primaryColor', 'secondaryColor', 'backgroundColor',
+				'textColor', 'accentColor', 'fontFamily', 'buttonStyle', 'imageStyle',
+				'navbarStyle', 'animations', 'spacing', 'updatedAt'
+			])
+				&& request.resource.data.keys().hasAll([
+				'userId', 'template', 'primaryColor', 'secondaryColor', 'backgroundColor',
+				'textColor', 'accentColor', 'fontFamily', 'buttonStyle', 'imageStyle',
+				'navbarStyle', 'animations', 'spacing', 'updatedAt'
+			])
+				&& request.resource.data.userId == uid
+				&& request.resource.data.template == 'default'
+				&& request.resource.data.primaryColor.matches('^#[0-9A-Fa-f]{6}$')
+				&& request.resource.data.secondaryColor.matches('^#[0-9A-Fa-f]{6}$')
+				&& request.resource.data.backgroundColor.matches('^#[0-9A-Fa-f]{6}$')
+				&& request.resource.data.textColor.matches('^#[0-9A-Fa-f]{6}$')
+				&& request.resource.data.accentColor.matches('^#[0-9A-Fa-f]{6}$')
+				&& request.resource.data.fontFamily in ['Arial', 'Poppins', 'Inter', 'Montserrat', 'Roboto', 'Open Sans']
+				&& request.resource.data.buttonStyle in ['square', 'rounded', 'pill']
+				&& request.resource.data.imageStyle in ['square', 'rounded', 'circle']
+				&& request.resource.data.navbarStyle in ['default', 'sticky', 'transparent']
+				&& request.resource.data.animations is bool
+				&& request.resource.data.spacing in ['compact', 'normal', 'spacious']
+				&& request.resource.data.updatedAt == request.time;
+		}
+
+		function validUsername(username) {
+			return username is string
+				&& username.matches('^[a-z0-9]+(-[a-z0-9]+)*$');
+		}
+
+		function usernameRegistryMatches(uid) {
+			let oldUsername = resource.data.username;
+			let newUsername = request.resource.data.username;
+			return newUsername == oldUsername
+				|| (newUsername == ''
+					&& (oldUsername == ''
+						|| !existsAfter(/databases/$(database)/documents/usernames/$(oldUsername))))
+				|| (validUsername(newUsername)
+					&& existsAfter(/databases/$(database)/documents/usernames/$(newUsername))
+					&& getAfter(/databases/$(database)/documents/usernames/$(newUsername)).data.ownerUid == uid
+					&& (oldUsername == ''
+						|| !existsAfter(/databases/$(database)/documents/usernames/$(oldUsername))));
+		}
+
+		function validNewUser(uid) {
+			return request.resource.data.keys().hasOnly([
+				'uid', 'email', 'name', 'username', 'role', 'accountStatus',
+				'paymentStatus', 'portfolioStatus', 'createdAt', 'updatedAt'
+			])
+				&& request.resource.data.uid == uid
+				&& request.resource.data.email == request.auth.token.email
+				&& request.resource.data.role == 'user'
+				&& request.resource.data.accountStatus == 'pending'
+				&& request.resource.data.paymentStatus == 'unpaid'
+				&& request.resource.data.portfolioStatus == 'draft'
+				&& request.resource.data.username == ''
+				&& request.resource.data.createdAt == request.time
+				&& request.resource.data.updatedAt == request.time;
+		}
+
+		function protectedUserFieldsUnchanged() {
+			return request.resource.data.uid == resource.data.uid
+				&& request.resource.data.email == resource.data.email
+				&& request.resource.data.role == resource.data.role
+				&& request.resource.data.accountStatus == resource.data.accountStatus
+				&& request.resource.data.paymentStatus == resource.data.paymentStatus
+				&& request.resource.data.portfolioStatus == resource.data.portfolioStatus
+				&& request.resource.data.createdAt == resource.data.createdAt;
+		}
+
+		function selfProfileUpdate(uid) {
+			let changed = request.resource.data.diff(resource.data).affectedKeys();
+			return isOwner(uid)
+				&& resource.data.role == 'user'
+				&& protectedUserFieldsUnchanged()
+				&& changed.hasOnly(['name', 'username', 'updatedAt'])
+				&& request.resource.data.updatedAt == request.time
+				&& (request.resource.data.username == '' || validUsername(request.resource.data.username))
+				&& usernameRegistryMatches(uid);
+		}
+
+		function selfPaymentRequest(uid) {
+			let changed = request.resource.data.diff(resource.data).affectedKeys();
+			return isOwner(uid)
+				&& resource.data.role == 'user'
+				&& protectedUserFieldsUnchanged()
+				&& changed.hasOnly(['paymentStatus', 'updatedAt'])
+				&& resource.data.paymentStatus in ['unpaid', 'rejected']
+				&& request.resource.data.paymentStatus == 'pending'
+				&& request.resource.data.updatedAt == request.time;
+		}
+
+		function portfolioItemRead() {
+			return isAdmin()
+				|| ('userId' in resource.data && resource.data.userId is string && isOwner(resource.data.userId))
+				|| ('userId' in resource.data && resource.data.userId is string && resource.data.published == true
+					&& isPublishedPortfolio(resource.data.userId))
+				|| (!('userId' in resource.data) && resource.data.published == true);
+		}
+
+		function portfolioItemCreate() {
+			return isAdmin()
+				|| (isSignedIn() && request.resource.data.userId == request.auth.uid);
+		}
+
+		function portfolioItemUpdate() {
+			return isAdmin()
+				|| (('userId' in resource.data) && resource.data.userId is string
+					&& isOwner(resource.data.userId)
+					&& request.resource.data.userId == resource.data.userId);
+		}
+
+		match /admins/{uid} {
+			allow get: if isSignedIn() && request.auth.uid == uid;
+			allow list, create, update, delete: if false;
+		}
+
+		match /users/{uid} {
+			allow get: if isAdmin() || isOwner(uid);
+			allow list: if isAdmin();
+			allow create: if isOwner(uid) && validNewUser(uid);
+			allow update: if isAdmin() || selfProfileUpdate(uid) || selfPaymentRequest(uid);
+			allow delete: if isAdmin();
+		}
+
+		match /usernames/{username} {
+			allow get: if isAdmin()
+				|| !exists(/databases/$(database)/documents/usernames/$(username))
+				|| (isSignedIn() && resource.data.ownerUid == request.auth.uid)
+				|| isPublishedPortfolio(resource.data.ownerUid);
+			allow list: if isAdmin();
+			allow create: if isSignedIn()
+				&& validUsername(username)
+				&& request.resource.data.keys().hasOnly(['ownerUid', 'createdAt'])
+				&& request.resource.data.ownerUid == request.auth.uid
+				&& request.resource.data.createdAt == request.time
+				&& !exists(/databases/$(database)/documents/usernames/$(username))
+				&& getAfter(userPath(request.auth.uid)).data.username == username;
+			allow update: if isAdmin()
+				|| (isSignedIn()
+					&& resource.data.ownerUid == request.auth.uid
+					&& request.resource.data.ownerUid == request.auth.uid
+					&& request.resource.data.keys().hasOnly(['ownerUid', 'createdAt'])
+					&& getAfter(userPath(request.auth.uid)).data.username == username);
+			allow delete: if isAdmin()
+				|| (isSignedIn() && resource.data.ownerUid == request.auth.uid
+					&& getAfter(userPath(request.auth.uid)).data.username != username);
+		}
+
+		match /settings/{settingId} {
+			allow get: if settingId == 'platform';
+			allow list: if isAdmin();
+			allow create, update, delete: if isAdmin();
+		}
+
+		match /portfolioSettings/{uid} {
+			allow get: if isAdmin() || isOwner(uid) || isPublishedPortfolio(uid);
+			allow list: if isAdmin();
+			allow create: if isAdmin() || (isOwner(uid) && validPortfolioSettings(uid));
+			allow update: if isAdmin()
+				|| (isOwner(uid)
+					&& resource.data.userId == uid
+					&& validPortfolioSettings(uid));
+			allow delete: if isAdmin() || (isOwner(uid) && resource.data.userId == uid);
+		}
+
+		match /{collection}/{documentId} {
+			allow read: if collection in [
+				'profiles', 'experiences', 'organizations', 'projects', 'gallery',
+				'publications', 'achievements', 'certificates', 'education',
+				'skills', 'socials', 'contacts'
+			] && ((collection in ['profiles', 'contacts'] && isOwner(documentId))
+				|| portfolioItemRead());
+			allow create: if collection in [
+				'profiles', 'experiences', 'organizations', 'projects', 'gallery',
+				'publications', 'achievements', 'certificates', 'education',
+				'skills', 'socials', 'contacts'
+			] && portfolioItemCreate();
+			allow update: if collection in [
+				'profiles', 'experiences', 'organizations', 'projects', 'gallery',
+				'publications', 'achievements', 'certificates', 'education',
+				'skills', 'socials', 'contacts'
+			] && portfolioItemUpdate();
+			allow delete: if collection in [
+				'profiles', 'experiences', 'organizations', 'projects', 'gallery',
+				'publications', 'achievements', 'certificates', 'education',
+				'skills', 'socials', 'contacts'
+			] && (isAdmin() || (('userId' in resource.data) && resource.data.userId is string && isOwner(resource.data.userId)));
+		}
+	}
+}

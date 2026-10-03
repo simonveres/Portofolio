@@ -15,6 +15,7 @@
 <link rel="canonical" href="https://simonveres.github.io/Portofolio/">
 
 <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/builder-landing.css">
 
     <link rel="stylesheet" href="css/style.css">
 </head>
@@ -101,7 +102,21 @@
     <!-- HERO -->
     <main>
 
-        <section class="hero">
+        <section class="builder-promo" aria-labelledby="builder-title">
+            <div class="builder-promo-copy">
+                <p class="hero-label" id="builder-platform-name">PORTFOLIO BUILDER</p>
+                <h1 id="builder-title">Bangun Portfolio Profesionalmu</h1>
+                <p>Isi pengalaman, pendidikan, project, dan skill dalam satu tempat. Bagikan portfolio online tanpa coding.</p>
+                <p class="builder-price" id="builder-price">Harga tersedia melalui konsultasi admin.</p>
+            </div>
+            <div class="builder-promo-actions">
+                <a class="btn btn-primary" href="register.html">Mulai Buat Portfolio</a>
+                <a class="btn btn-secondary" href="login.html">Login</a>
+                <a class="builder-demo-link" href="#demo-portfolio">Lihat Contoh Portfolio</a>
+            </div>
+        </section>
+
+        <section class="hero" id="demo-portfolio">
 
             <div class="hero-content">
 
@@ -109,12 +124,12 @@
                     ACCOUNTING • FINANCE • AUDIT • TAX
                 </p>
 
-                <h1>
+                <h1 data-profile-name>
                     Simon Veres<br>
                     <span>Sianturi</span>
                 </h1>
 
-                <p class="hero-description">
+                <p class="hero-description" data-profile-headline>
                     Accounting student focused on
                     accounting, finance, audit, and tax.
                 </p>
@@ -123,17 +138,17 @@
 
                     <div>
                         <strong>GPA</strong>
-                        <span>3.64 / 4.00</span>
+                        <span data-profile-gpa>3.64 / 4.00</span>
                     </div>
 
                     <div>
                         <strong>UNIVERSITY</strong>
-                        <span>Universitas Kristen Indonesia</span>
+                        <span data-profile-university>Universitas Kristen Indonesia</span>
                     </div>
 
                     <div>
                         <strong>FOCUS</strong>
-                        <span>Accounting, Finance, Audit &amp; Tax</span>
+                        <span data-profile-focus>Accounting, Finance, Audit &amp; Tax</span>
                     </div>
 
                 </div>
@@ -164,12 +179,12 @@
                 <div class="profile-frame">
 
                     <div class="profile-photo">
-    <img src="assets/images/profilsim.jpg" alt="Simon Veres Sianturi">
+    <img src="assets/images/profilsim.jpg" alt="Simon Veres Sianturi" data-profile-photo>
 </div>
 
                     <div class="profile-tag">
                         <span>Based in</span>
-                        <strong>Indonesia</strong>
+                        <strong data-profile-location>Indonesia</strong>
                     </div>
 
                 </div>
@@ -490,6 +505,9 @@
 
     </footer>
 
+    <script src="js/firebase-config.js"></script>
+    <script src="js/firebase-config-bridge.js"></script>
+    <script type="module" src="js/platform-landing.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

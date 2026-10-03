@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex, nofollow">
+	<title>Dashboard | Portfolio Builder</title>
+	<link rel="stylesheet" href="../css/admin.css">
+	<link rel="stylesheet" href="../css/user-dashboard.css">
+	<script src="../js/firebase-config.js"></script>
+	<script src="../js/firebase-config-bridge.js"></script>
+	<script type="module" src="../js/user-dashboard.js"></script>
+</head>
+<body>
+	<main class="admin-shell user-shell">
+		<section class="user-dashboard" id="user-dashboard" hidden>
+			<header class="dashboard-header">
+				<a class="admin-brand" href="../index.html"><span>PB</span> Portfolio Builder</a>
+				<div class="account-tools"><span id="user-account-name"></span><button class="button button-quiet" id="user-logout" type="button">Logout</button></div>
+			</header>
+			<div class="dashboard-layout user-layout">
+				<aside class="dashboard-sidebar user-sidebar">
+					<p class="eyebrow">PORTFOLIO SAYA</p>
+					<p class="wizard-progress-label" id="wizard-progress-label">Langkah 1 dari 12</p>
+					<progress class="wizard-progress-bar" id="wizard-progress-bar" max="12" value="1">1 dari 12</progress>
+					<ol class="wizard-step-indicator" id="wizard-step-indicator" aria-label="Langkah portfolio"></ol>
+					<button class="button button-quiet design-entry-button" id="open-design-customizer" type="button">🎨 Desain</button>
+					<button class="button button-quiet dashboard-nav-logout" id="user-sidebar-logout" type="button">Logout</button>
+				</aside>
+				<section class="content-panel" aria-labelledby="user-view-title">
+					<div id="user-overview" hidden>
+						<div class="panel-heading"><div><p class="eyebrow">PAYMENT / PUBLIKASI</p><h1 id="user-view-title">Portfolio</h1></div><p class="notice" id="user-overview-notice" role="status" aria-live="polite"></p></div>
+						<button class="button button-quiet wizard-back-button" id="payment-back-button" type="button">← Kembali</button>
+						<div class="user-status-grid">
+							<article class="user-status"><span>Status Akun</span><strong data-user-status="accountStatus">Pending</strong></article>
+							<article class="user-status"><span>Pembayaran</span><strong data-user-status="paymentStatus">Belum dibayar</strong></article>
+							<article class="user-status"><span>Portfolio</span><strong data-user-status="portfolioStatus">Draft</strong></article>
+						</div>
+						<div class="user-actions">
+							<button class="button button-primary" id="publish-portfolio-button" type="button">Publikasikan Portfolio</button>
+							<a class="button button-quiet" id="preview-portfolio-link" href="../portfolio.html?preview=1" target="_blank" rel="noopener noreferrer">Preview Portfolio</a>
+							<button class="button button-quiet" id="copy-portfolio-link" type="button" hidden>Copy Link</button>
+							<button class="button button-quiet" id="share-portfolio-link" type="button" hidden>Share Portfolio</button>
+						</div>
+						<p class="portfolio-link-display" id="portfolio-link-display" hidden></p>
+						<p class="user-message" id="payment-message" role="status" aria-live="polite"></p>
+						<div class="user-progress"><div class="progress-heading"><h2>Portfolio Completion</h2><strong id="completion-label">0%</strong></div><progress id="completion-progress" max="100" value="0">0%</progress><div id="completion-sections" class="completion-sections"></div></div>
+					</div>
+					<div id="user-collection-view" hidden>
+						<div class="panel-heading"><div><p class="eyebrow" id="wizard-step-label">PROFILE / DATA DIRI</p><h1 id="user-collection-title">Profile</h1><p class="wizard-step-description" id="wizard-step-description"></p></div><button class="button button-primary" id="user-add-entry" type="button">+ Tambah Data</button></div>
+						<p class="notice" id="user-collection-notice" role="status" aria-live="polite"></p>
+						<div class="manager-grid"><div class="entry-list" id="user-entry-list" aria-label="Portfolio records"></div>
+							<form id="user-entry-form" class="admin-form editor-form" hidden><div id="user-editor-fields"></div><div class="editor-actions"><button class="button button-primary" id="user-save-continue" type="submit">Simpan &amp; Lanjut →</button><button class="button button-quiet" id="user-save-add-another" type="submit" hidden>Simpan &amp; Tambah Lagi</button><button class="button button-quiet" id="user-cancel-edit" type="button">Cancel</button></div></form>
+						</div>
+						<div class="wizard-controls"><button class="button button-quiet wizard-back-button" id="wizard-back-button" type="button">← Kembali</button><button class="button button-quiet" id="wizard-skip-button" type="button" hidden>Lewati &amp; Lanjut</button><button class="button button-primary" id="wizard-continue-button" type="button">Simpan &amp; Lanjut →</button></div>
+					</div>
+					<div id="user-wizard-preview" hidden><div class="panel-heading"><div><p class="eyebrow">LANGKAH 13 · PREVIEW</p><h1>Preview Portfolio</h1><p class="wizard-step-description">Periksa tampilan portfolio sebelum menghubungi admin.</p></div></div><p class="notice" id="wizard-preview-notice" role="status" aria-live="polite"></p><a class="button button-quiet" id="wizard-preview-open" target="_blank" rel="noopener noreferrer">Buka di tab baru</a><iframe class="wizard-preview-frame" id="wizard-preview-frame" title="Preview portfolio"></iframe><div class="wizard-controls"><button class="button button-quiet" id="wizard-preview-back" type="button">← Kembali</button><button class="button button-primary" id="wizard-preview-continue" type="button">Lanjut ke Payment →</button></div></div>
+					<div id="user-design-customizer" hidden>
+						<div class="panel-heading"><div><p class="eyebrow">DESAIN PORTFOLIO</p><h1>🎨 Desain</h1><p class="wizard-step-description">Atur tampilan portfolio kamu. Perubahan di preview belum tersimpan sampai Save Design ditekan.</p></div></div>
+						<p class="notice" id="design-notice" role="status" aria-live="polite"></p>
+						<div class="design-customizer-layout">
+							<form id="design-settings-form" class="design-settings-form">
+								<div class="field-group"><label for="design-template">Template</label><select id="design-template" name="template"><option value="default">Template utama</option></select></div>
+								<fieldset class="design-color-fields"><legend>Warna</legend>
+									<div class="design-color-field"><label for="design-primary-color">Primary Color</label><input id="design-primary-color" name="primaryColor" type="color"></div>
+									<div class="design-color-field"><label for="design-secondary-color">Secondary Color</label><input id="design-secondary-color" name="secondaryColor" type="color"></div>
+									<div class="design-color-field"><label for="design-background-color">Background Color</label><input id="design-background-color" name="backgroundColor" type="color"></div>
+									<div class="design-color-field"><label for="design-text-color">Text Color</label><input id="design-text-color" name="textColor" type="color"></div>
+									<div class="design-color-field"><label for="design-accent-color">Accent Color</label><input id="design-accent-color" name="accentColor" type="color"></div>
+								</fieldset>
+								<div class="field-group"><label for="design-font-family">Font</label><select id="design-font-family" name="fontFamily"><option value="Arial">Default (Arial)</option><option value="Poppins">Poppins</option><option value="Inter">Inter</option><option value="Montserrat">Montserrat</option><option value="Roboto">Roboto</option><option value="Open Sans">Open Sans</option></select></div>
+								<div class="field-group"><label for="design-button-style">Bentuk tombol</label><select id="design-button-style" name="buttonStyle"><option value="square">Square</option><option value="rounded">Rounded</option><option value="pill">Pill</option></select></div>
+								<div class="field-group"><label for="design-image-style">Bentuk foto</label><select id="design-image-style" name="imageStyle"><option value="square">Square</option><option value="rounded">Rounded</option><option value="circle">Circle</option></select></div>
+								<div class="field-group"><label for="design-navbar-style">Navbar</label><select id="design-navbar-style" name="navbarStyle"><option value="default">Default</option><option value="sticky">Sticky</option><option value="transparent">Transparent</option></select></div>
+								<div class="field-group"><label for="design-spacing">Spacing</label><select id="design-spacing" name="spacing"><option value="compact">Compact</option><option value="normal">Normal</option><option value="spacious">Spacious</option></select></div>
+								<label class="design-toggle" for="design-animations"><input id="design-animations" name="animations" type="checkbox"><span>Animasi aktif</span></label>
+								<div class="design-actions"><button class="button button-primary" id="save-design-button" type="submit">Save Design</button><button class="button button-quiet" id="reset-design-button" type="button">Reset Design</button><button class="button button-quiet" id="close-design-customizer" type="button">Kembali ke builder</button></div>
+							</form>
+							<section class="design-preview-panel" aria-labelledby="design-preview-title"><div class="design-preview-heading"><h2 id="design-preview-title">Live Preview</h2><span id="design-save-state">Default design</span></div><iframe id="design-preview-frame" class="design-preview-frame" title="Live portfolio design preview"></iframe></section>
+						</div>
+					</div>
+				</section>
+			</div>
+		</section>
+		<p class="notice admin-global-notice" id="user-dashboard-fallback" role="status" aria-live="polite">Memuat akun...</p>
+	</main>
+</body>
+</html>

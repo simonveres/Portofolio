@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex, nofollow">
+	<title>Admin | Simon Veres Sianturi</title>
+	<link rel="stylesheet" href="../css/admin.css">
+	<script src="../js/firebase-config.js"></script>
+	<script src="../js/firebase-config-bridge.js"></script>
+	<script type="module" src="../js/firebase-admin.js"></script>
+</head>
+<body>
+	<main class="admin-shell">
+		<section class="login-panel" id="login-panel" aria-labelledby="login-title">
+			<a class="admin-brand" href="../index.html"><span>SV</span> Simon Veres</a>
+			<p class="eyebrow">PORTFOLIO MANAGEMENT</p>
+			<h1 id="login-title">Admin sign in</h1>
+			<p class="muted">Sign in with your Firebase administrator account.</p>
+			<form id="login-form" class="admin-form" method="post">
+				<label for="login-email">Email</label>
+				<input id="login-email" name="email" type="email" autocomplete="username" required>
+				<label for="login-password">Password</label>
+				<input id="login-password" name="password" type="password" autocomplete="current-password" required>
+				<button class="button button-primary" type="submit">Sign in</button>
+			</form>
+			<p class="notice" id="login-notice" role="status" aria-live="polite"></p>
+			<a class="back-link" href="../index.html">Back to portfolio</a>
+		</section>
+	</main>
+</body>
+</html>

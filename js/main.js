@@ -232,3 +232,30 @@ reactiveBoxes.forEach((box) => {
 		box.style.setProperty("--cursor-y", `${y}%`);
 	});
 });
+
+const mainScriptUrl = document.currentScript?.src;
+
+if (mainScriptUrl && !document.querySelector("script[data-portfolio-content]")) {
+	const loadFirebasePortfolioModule = () => {
+		const portfolioContentScript = document.createElement("script");
+		portfolioContentScript.type = "module";
+		portfolioContentScript.src = new URL("firebase-portfolio-content.js", mainScriptUrl).href;
+		portfolioContentScript.dataset.portfolioContent = "true";
+		document.body.appendChild(portfolioContentScript);
+	};
+	if (window.PORTFOLIO_FIREBASE_CONFIG) {
+		loadFirebasePortfolioModule();
+	} else {
+		const configScript = document.createElement("script");
+		configScript.src = new URL("firebase-config.js", mainScriptUrl).href;
+		configScript.onload = () => {
+			const bridgeScript = document.createElement("script");
+			bridgeScript.src = new URL("firebase-config-bridge.js", mainScriptUrl).href;
+			bridgeScript.onload = loadFirebasePortfolioModule;
+			bridgeScript.onerror = loadFirebasePortfolioModule;
+			document.head.appendChild(bridgeScript);
+		};
+		configScript.onerror = loadFirebasePortfolioModule;
+		document.head.appendChild(configScript);
+	}
+}

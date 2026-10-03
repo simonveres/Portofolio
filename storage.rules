@@ -1,0 +1,36 @@
+rules_version = '2';
+service firebase.storage {
+	match /b/{bucket}/o {
+		function isAdmin() {
+			return request.auth != null
+				&& firestore.get(/databases/(default)/documents/admins/$(request.auth.uid)).data.active == true;
+		}
+
+		function isPortfolioCollection(collection) {
+			return collection in [
+				'profiles', 'experiences', 'organizations', 'projects', 'gallery',
+				'publications', 'achievements', 'certificates', 'education',
+				'skills', 'socials', 'contacts'
+			];
+		}
+
+		function isPublished(collection, documentId) {
+			return firestore.get(
+				/databases/(default)/documents/$(collection)/$(documentId)
+			).data.published == true;
+		}
+
+		match /portfolio/{collection}/{documentId}/{fileName} {
+			allow read: if isPortfolioCollection(collection)
+				&& (isAdmin() || isPublished(collection, documentId));
+			allow create, update: if isAdmin()
+				&& request.resource.size < 20 * 1024 * 1024
+				&& request.resource.contentType.matches('image/.*|application/pdf');
+			allow delete: if isAdmin();
+		}
+
+		match /{allPaths=**} {
+			allow read, write: if false;
+		}
+	}
+}

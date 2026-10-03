@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Portfolio profesional.">
+	<meta property="og:title" content="Portfolio">
+	<meta property="og:description" content="Portfolio profesional.">
+	<meta property="og:image" content="">
+	<meta property="og:url" content="">
+	<title>Portfolio</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Open+Sans:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="css/style.css">
+	<link rel="stylesheet" href="css/user-dashboard.css">
+	<script src="js/firebase-config.js"></script>
+	<script src="js/firebase-config-bridge.js"></script>
+	<script type="module" src="js/portfolio-public.js"></script>
+</head>
+<body class="builder-portfolio">
+	<header class="navbar">
+		<div class="nav-container">
+			<a class="logo" href="index.html"><span class="logo-mark">PB</span><span class="logo-copy"><strong id="portfolio-brand">PORTFOLIO</strong><small id="portfolio-headline">PROFESSIONAL PROFILE</small></span></a>
+			<button class="menu-toggle" type="button" aria-label="Open navigation menu" aria-expanded="false" aria-controls="portfolio-navigation"><span></span><span></span><span></span></button>
+			<nav class="nav-menu" id="portfolio-navigation" aria-label="Portfolio sections"></nav>
+		</div>
+	</header>
+	<main id="portfolio-content" hidden>
+		<section class="builder-hero" id="profile-section">
+			<div class="builder-hero-copy"><p class="page-label">PORTFOLIO</p><h1 id="portfolio-name"></h1><h2 id="portfolio-title"></h2><p class="page-description" id="portfolio-bio"></p><p class="builder-location" id="portfolio-location"></p></div>
+			<img id="portfolio-image" alt="" hidden>
+		</section>
+		<div class="builder-sections">
+			<section class="builder-section" id="experience-section" data-section="experiences"><p class="page-label">EXPERIENCE</p><h2>Experience</h2><div class="builder-grid" data-records="experiences"></div></section>
+			<section class="builder-section" id="education-section" data-section="education"><p class="page-label">EDUCATION</p><h2>Education</h2><div class="builder-grid" data-records="education"></div></section>
+			<section class="builder-section" id="organization-section" data-section="organizations"><p class="page-label">ORGANIZATION</p><h2>Organization</h2><div class="builder-grid" data-records="organizations"></div></section>
+			<section class="builder-section" id="projects-section" data-section="projects"><p class="page-label">PROJECTS</p><h2>Projects</h2><div class="builder-grid" data-records="projects"></div></section>
+			<section class="builder-section" id="skills-section" data-section="skills"><p class="page-label">SKILLS</p><h2>Skills</h2><div class="builder-grid" data-records="skills"></div></section>
+			<section class="builder-section" id="certificates-section" data-section="certificates"><p class="page-label">CERTIFICATES</p><h2>Certificates</h2><div class="builder-grid" data-records="certificates"></div></section>
+			<section class="builder-section" id="achievements-section" data-section="achievements"><p class="page-label">ACHIEVEMENTS</p><h2>Achievements</h2><div class="builder-grid" data-records="achievements"></div></section>
+			<section class="builder-section" id="gallery-section" data-section="gallery"><p class="page-label">GALLERY</p><h2>Gallery</h2><div class="builder-grid builder-gallery" data-records="gallery"></div></section>
+			<section class="builder-section" id="publications-section" data-section="publications"><p class="page-label">PUBLICATIONS</p><h2>Publications</h2><div class="builder-grid" data-records="publications"></div></section>
+			<section class="builder-section" id="socials-section" data-section="socials"><p class="page-label">SOCIAL MEDIA</p><h2>Social Media</h2><div class="builder-grid" data-records="socials"></div></section>
+			<section class="builder-section" id="contacts-section" data-section="contacts"><p class="page-label">CONTACT</p><h2>Contact</h2><div class="builder-grid" data-records="contacts"></div></section>
+		</div>
+	</main>
+	<main class="portfolio-state" id="portfolio-state" role="status" aria-live="polite"><div><p class="page-label">PORTFOLIO BUILDER</p><h1>Memuat portfolio...</h1><p>Mohon tunggu sebentar.</p></div></main>
+	<footer><p>&copy; <span id="portfolio-year"></span> <span id="portfolio-footer-name">Portfolio Builder</span></p></footer>
+	<script src="js/main.js"></script>
+</body>
+</html>

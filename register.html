@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex, nofollow">
+	<title>Buat Akun | Portfolio Builder</title>
+	<link rel="stylesheet" href="css/admin.css">
+	<script src="js/firebase-config.js"></script>
+	<script src="js/firebase-config-bridge.js"></script>
+	<script type="module" src="js/user-account.js"></script>
+</head>
+<body>
+	<main class="admin-shell">
+		<section class="login-panel" aria-labelledby="register-title">
+			<a class="admin-brand" href="index.html"><span>PB</span> Portfolio Builder</a>
+			<p class="eyebrow">MULAI MEMBANGUN</p>
+			<h1 id="register-title">Buat akun</h1>
+			<p class="muted">Portfolio Anda akan tersimpan di akun pribadi.</p>
+			<form id="user-register-form" class="admin-form">
+				<label for="register-name">Nama</label>
+				<input id="register-name" name="name" autocomplete="name" maxlength="100" required>
+				<label for="register-email">Email</label>
+				<input id="register-email" name="email" type="email" autocomplete="email" required>
+				<label for="register-password">Password</label>
+				<input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+				<label for="register-confirm-password">Konfirmasi password</label>
+				<input id="register-confirm-password" name="confirmPassword" type="password" autocomplete="new-password" minlength="8" required>
+				<button class="button button-primary" type="submit">Buat akun</button>
+			</form>
+			<p class="notice" id="user-account-notice" role="status" aria-live="polite"></p>
+			<p class="muted">Sudah punya akun? <a class="back-link" href="login.html">Masuk</a></p>
+			<a class="back-link" href="index.html">Kembali ke website</a>
+		</section>
+	</main>
+</body>
+</html>

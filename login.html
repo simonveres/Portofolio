@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex, nofollow">
+	<title>Login | Portfolio Builder</title>
+	<link rel="stylesheet" href="css/admin.css">
+	<script src="js/firebase-config.js"></script>
+	<script src="js/firebase-config-bridge.js"></script>
+	<script type="module" src="js/user-account.js"></script>
+</head>
+<body>
+	<main class="admin-shell">
+		<section class="login-panel" aria-labelledby="login-title">
+			<a class="admin-brand" href="index.html"><span>PB</span> Portfolio Builder</a>
+			<p class="eyebrow">AKUN PORTFOLIO</p>
+			<h1 id="login-title">Masuk</h1>
+			<p class="muted">Kelola data dan link portfolio Anda.</p>
+			<form id="user-login-form" class="admin-form">
+				<label for="user-login-email">Email</label>
+				<input id="user-login-email" name="email" type="email" autocomplete="username" required>
+				<label for="user-login-password">Password</label>
+				<input id="user-login-password" name="password" type="password" autocomplete="current-password" required>
+				<button class="button button-primary" type="submit">Masuk</button>
+			</form>
+			<p class="notice" id="user-account-notice" role="status" aria-live="polite"></p>
+			<p class="muted">Belum memiliki akun? <a class="back-link" href="register.html">Buat akun</a></p>
+			<a class="back-link" href="index.html">Kembali ke website</a>
+		</section>
+	</main>
+</body>
+</html>
