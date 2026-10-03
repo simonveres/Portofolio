@@ -144,11 +144,14 @@
 .builder-portfolio.design-customized .builder-card { background-color: var(--portfolio-background); border-color: var(--portfolio-secondary); color: var(--portfolio-text); }
 .builder-portfolio.design-customized .page-label,
 .builder-portfolio.design-customized .builder-link { color: var(--portfolio-accent); }
+.builder-portfolio.design-customized .builder-link { display: inline-flex; min-height: 38px; align-items: center; padding: 8px 12px; border: 1px solid var(--portfolio-primary); border-radius: var(--portfolio-button-radius); background: var(--portfolio-primary); color: #fff; text-decoration: none; }
+.builder-portfolio.design-customized .builder-link:hover { border-color: var(--portfolio-secondary); background: var(--portfolio-secondary); }
 .builder-portfolio.design-customized .btn-primary,
 .builder-portfolio.design-customized .nav-contact { background-color: var(--portfolio-primary); border-color: var(--portfolio-primary); color: #fff; }
 .builder-portfolio.design-customized .btn-secondary { background-color: var(--portfolio-secondary); border-color: var(--portfolio-secondary); color: #fff; }
 .builder-portfolio.design-customized .navbar { background-color: var(--portfolio-primary); background-blend-mode: multiply; }
 .builder-portfolio.design-customized .builder-section { padding-block: var(--portfolio-spacing); }
+.builder-portfolio.design-customized .builder-card-copy { padding: var(--portfolio-card-spacing, 18px); }
 .builder-portfolio.design-customized .builder-card { animation: user-portfolio-enter .3s ease both; }
 .builder-portfolio.design-customized[data-animations="false"] .builder-card { animation: none !important; }
 .builder-portfolio.design-customized .builder-hero > img,
@@ -157,9 +160,9 @@
 .builder-portfolio.design-customized .nav-contact { border-radius: var(--portfolio-button-radius); }
 .builder-portfolio.design-customized[data-navbar-style="sticky"] .navbar { position: sticky; top: 0; }
 .builder-portfolio.design-customized[data-navbar-style="transparent"] .navbar { background: transparent; background-image: none; box-shadow: none; }
-.builder-portfolio.design-customized[data-spacing="compact"] { --portfolio-spacing: 22px; }
-.builder-portfolio.design-customized[data-spacing="normal"] { --portfolio-spacing: 38px; }
-.builder-portfolio.design-customized[data-spacing="spacious"] { --portfolio-spacing: 56px; }
+.builder-portfolio.design-customized[data-spacing="compact"] { --portfolio-spacing: 22px; --portfolio-card-spacing: 14px; }
+.builder-portfolio.design-customized[data-spacing="normal"] { --portfolio-spacing: 38px; --portfolio-card-spacing: 18px; }
+.builder-portfolio.design-customized[data-spacing="spacious"] { --portfolio-spacing: 56px; --portfolio-card-spacing: 24px; }
 .builder-portfolio.design-customized[data-animations="false"] *,
 .builder-portfolio.design-customized[data-animations="false"] *::before,
 .builder-portfolio.design-customized[data-animations="false"] *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }

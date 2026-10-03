@@ -729,11 +729,8 @@ function publicPortfolioUrl(username) {
 }
 
 function privatePreviewUrl({ designPreview = false } = {}) {
-	const profile = recordsByCollection.profiles?.[0] || {};
-	const username = userRecord.username || profile.username || "";
 	const url = new URL("../portfolio.html", window.location.href);
-	if (username) url.searchParams.set("username", username);
-	else url.searchParams.set("uid", currentUser.uid);
+	url.searchParams.set("uid", currentUser.uid);
 	url.searchParams.set("preview", "1");
 	if (designPreview) url.searchParams.set("designPreview", "1");
 	return url;
