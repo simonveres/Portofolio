@@ -1,1 +1,0 @@
-window.PORTFOLIO_FIREBASE_CONFIG = typeof firebaseConfig === "undefined" ? null : firebaseConfig;
