@@ -2529,15 +2529,6 @@ select {
     padding: 32px;
 }
 
-.achievement-photo {
-    display: block;
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    margin-bottom: 24px;
-    border-radius: 10px;
-    object-fit: cover;
-}
-
 .organization-card .card-number {
     display: block;
 
